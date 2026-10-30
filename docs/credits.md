@@ -18,6 +18,12 @@ The source and licence of every font, sound and voice clip in the app. The About
 | `public/fonts/kantumruy-pro-latin-ext.woff2` | Extended Latin | 2,128 | `4017f8cd388437eb306f12b7d972ef7f955d86f269744f2176f7cb9f7f44dec1` |
 | `public/fonts/OFL.txt` | Licence text | 4,396 | `7b300b8a1e2e9d7cddb68859551f1ad54a05019eff28da02e3be811c1257f0a7` |
 
+No other fonts. Latin text uses Kantumruy Pro too.
+
+## Logo and icons
+
+The Aksor logo, app icon and favicons were drawn for this project on 2026-10-30. They contain no third-party artwork or font outlines. The mark follows Kantumruy Pro's ក (a bar over an arch) but is built from lines and an arc, and the wordmark "aksor" is drawn in single strokes. The shapes are in `src/lib/brand.ts`, and `npm run icons` writes `public/icon.svg`, `public/favicon.svg`, `public/logo.svg` and the PNG icons from them. The small line icons on the buttons (`src/components/icons.tsx`) were also drawn for the project.
+
 ## Sound effects
 
 None yet. Added in Phase 4.

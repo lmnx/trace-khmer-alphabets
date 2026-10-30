@@ -1,14 +1,17 @@
 # Trace the Khmer Alphabet
 
-A phone-first web app where learners trace the Khmer numerals and the 33 consonants, alone or with their subscripts, get a score, hear feedback, and earn badges. It is for Cambodians, diaspora kids and foreign learners alike. The full plan, the prompt for each phase and the open decisions are in docs/workplan.md.
+A phone-first web app where learners trace the Khmer numerals and the 33 consonants, alone or with their subscripts, get a score, hear feedback, and relight a night sky as they progress. It is for Cambodians, diaspora kids and foreign learners alike. The full plan, the prompt for each phase and the open decisions are in docs/workplan.md.
 
 ## Status
 - Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone.
 - Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is live from 0aabbd4, and Kim checked it on phones. Phase 1 done 2026-10-30. ឡ showing alone in the Both view goes live with Phase 2.
 - Phase 2 (Tracing canvas) done 2026-10-30: drawing checked on Kim's phone over Wi-Fi. Its first push (7f42ce7) failed CI on a timing race in an e2e test and wasn't deployed. It went live with Phase 3.
-- Phase 3 (Scoring) live 2026-10-30 from 4472f1f, tuned with Kim on a phone, with the live-site checks logged. The scoring rule changed (see Tracing and scoring). Still to do: five people's honest attempts feel fair to them. Next: Phase 4 (Audio, progress and badges).
+- Phase 3 (Scoring) live 2026-10-30 from 4472f1f, tuned with Kim on a phone, with the live-site checks logged. The scoring rule changed (see Tracing and scoring). Still to do: five people's honest attempts feel fair to them.
+- Phase 3.5 (Brand and makeover), added 2026-10-30 at Kim's request: the Aksor name, logo and dark "Star path" theme, and a game-like restyle of the grid, trace screen and score, visual only. Made flat on 2026-10-31 at Kim's request, with the headline "See how good your Khmer writing is!" Built and checked locally 2026-10-31 (typecheck, lint, unit tests, e2e, security checks 1, 2, 4 and 5). Waiting on Kim's phone check, the commit and /security-review.
+- Replanned 2026-10-31: Phase 4 is now the night sky story and progression (unlock in order, beat your best, a constellation per set), Phase 5 is sound, Phase 6 is polish and ship. Phase 4's open questions are in docs/workplan.md. Next: Phase 4.
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
-- Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
+- Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4 (Phase 5 since 2026-10-31).
+- Decided 2026-10-30: the app is called Aksor (អក្សរ, "letters"), with "Trace the Khmer Alphabet" as the tagline. The domain will be playaksor.app (aksor.app is someone else's). Not bought yet.
 
 ## How we work
 - Claude is project manager and security advisor as well as developer. Raise risks, scope creep and outdated dependencies without waiting to be asked.
@@ -36,10 +39,14 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 - src/lib/masks.ts: draws the 256 x 256 masks and stroke paths that scoring.ts compares.
 - src/lib/progress.ts: the only module that touches localStorage.
 - src/lib/audio.ts: the only module that plays sound.
+- src/lib/brand.ts: the logo's shapes, for the Logo component and scripts/icons.ts.
+- src/lib/theme.ts: `canvasColors()`, the theme's colours for the canvas.
+- src/lib/motion.ts: `prefersReducedMotion()`, `pulse()` and `useCountUp()`, the motion done in JavaScript.
 - src/i18n/en.ts: all UI text. km.ts comes later with the Khmer toggle.
-- src/components/: LetterGrid, FormToggle, TraceCanvas, ScoreOverlay, BadgeShelf.
+- src/components/: LetterGrid, FormToggle, TraceCanvas, ScoreOverlay, BadgeShelf, Logo (AppIcon and Wordmark), icons.tsx (line icons) and styles.ts (shared button classes).
+- public/: icon.svg, favicon.svg, logo.svg and the PNG icons, written by `npm run icons`, and manifest.webmanifest.
 - public/fonts/: self-hosted Kantumruy Pro (woff2).
-- public/audio/sfx/: sound effects. public/audio/letters/<order>-<name>.mp3: letter names (Phase 4).
+- public/audio/sfx/: sound effects. public/audio/letters/<order>-<name>.mp3: letter names (Phase 5).
 - .github/: deploy workflow and dependabot.yml.
 - docs/: workplan.md, security-log.md, credits.md.
 
@@ -62,9 +69,18 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 - Stroke points are stored as shares of the canvas (0 to 1). perfect-freehand needs pixel-sized units, so strokes are built in a 1000-unit INK_SPACE and scaled to the canvas.
 - The ink is as wide as the template's own strokes: STROKE_EM (0.07, measured for Kantumruy Pro; 0.06 for a subscript on its own) times the guide's font size, with no thinning. Scoring uses the same `layoutGlyph()`, `templateStrokeWidth()` and `strokePath()`, so the mask lines up with what the learner sees.
 
+## Brand and theme
+- The app is Aksor (អក្សរ), "Trace the Khmer Alphabet" is the tagline. Both are in src/i18n/en.ts. The `<title>`, the manifest and the theme-color meta tag carry them too.
+- The logo is ក half traced: a dotted guide, mint ink and a star-yellow dot for the finger, beside "aksor" drawn in single strokes. Its shapes are in src/lib/brand.ts. `npm run icons` writes the SVG and PNG icons in public/ from them. Never edit those files by hand.
+- The theme is "Star path": a midnight page with star yellow, mint, green and rose. Colours come only from the semantic variables on :root in src/index.css, used through utilities like bg-surface, text-fg-muted and ring-ink. Tailwind's own palette is switched off, and tests/theme.test.ts fails on a hex or rgb() colour in a component or page, and on any text pair below WCAG AA. A second theme later is one more block of these variables, under a selector such as [data-theme="light"]. The icons, the manifest and the theme-color meta stay midnight.
+- The canvas can't use classes, so it reads its colours (`--guide`, `--ink`, `--covered`, `--missed`) through `canvasColors()`.
+- Flat design (Kim, 2026-10-31): solid colours, no shadows, lips, gradients or borders for depth. Dashed outlines mark what isn't there (ឡ's missing subscript, the arrow at either end). Buttons and tiles use the `press` utility and shrink a little while pressed. iOS shows :active only because main.tsx listens for touchstart.
+- Motion: CSS animations only behind `motion-safe:`, and JavaScript motion only through src/lib/motion.ts, which checks for reduced motion. Animate opacity and transform only, never layout. The e2e tests wait for animations to finish before drawing, and check that nothing animates with reduced motion.
+- No display font: Latin text is Kantumruy Pro too.
+
 ## Audio
-- MVP: short sound effects only (stroke, success, stars, badge).
-- Letter-name clips (Phase 4): a script generates them offline with a Khmer neural voice, a native speaker approves them, and they are committed as static mp3 files. The browser never calls a TTS or AI API. API keys stay in a git-ignored .env on the developer's machine.
+- MVP: short sound effects only (stroke, success, stars, constellation).
+- Letter-name clips (Phase 5): a script generates them offline with a Khmer neural voice, a native speaker approves them, and they are committed as static mp3 files. The browser never calls a TTS or AI API. API keys stay in a git-ignored .env on the developer's machine.
 - Play sound only in response to a tap (iOS blocks autoplay), and honour the mute toggle.
 
 ## Security
@@ -97,6 +113,7 @@ Run these at the end of every phase and before sharing a link. Log the date, the
 - `npm run lint`: ESLint. It also bans innerHTML, dangerouslySetInnerHTML, document.write and eval, and localStorage outside src/lib/progress.ts.
 - `npm run typecheck`: `tsc -b` over the app, the configs, the scripts and the tests.
 - `npm run letters`: regenerates src/data/letters.ts after an edit to letters.csv. `npm test` fails if you forget.
+- `npm run icons`: rewrites the icons in public/ from src/lib/brand.ts, drawing the PNGs with Playwright's Chromium. Commit what it writes.
 
 ## Conventions
 - Mobile first: test at 375 px wide. Tap targets are at least 48 px, and grid tiles at least 64 px.

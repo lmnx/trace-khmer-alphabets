@@ -2,6 +2,27 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-31 · Phase 3.5 (Brand and makeover)
+
+Run before committing. Check 3 runs after the commit and before the push, and checks 4 and 5 need repeating on the live site after the push. These ran against the local production build.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | `npm audit --omit=dev` | 0 vulnerabilities. Full `npm audit`, dev included: 0. `npm audit signatures`: 88 packages have verified attestations. `npm install-scripts ls`: no packages with unreviewed install scripts. No dependency changes this phase. |
+| 2 | `npm outdated`, Dependabot PRs | `typescript` 7.0.2 is still held. `eslint` 10.14.0 (dev only, published 2026-10-30) waits for Dependabot's 7-day cooldown. Open Dependabot PRs couldn't be listed here, because `gh` isn't installed: Kim to check on GitHub. |
+| 3 | `/security-review` | No findings, over the three unpushed commits: 48ab633 (docs), 24167b8 (docs/monetization.md, from another session) and 7943419 (Phase 3.5). It checked for injection sinks (none), the SVG and icon constants, the CSS variables the canvas reads (only from the site's own stylesheet, then through canvas `fillStyle`), the motion code, the manifest and icon links (all same-origin and relative in the build), scripts/icons.ts (constants only, fixed output paths, no outside input), and secrets (none). The CSP is unchanged. |
+| 4 | CSP meta tag, no violations | The built `index.html` still starts `<head>` with the CSP and referrer tags, unchanged. e2e passed on Android Chrome and iPhone Safari emulation (39 passed, 1 skipped, which is the Chromium-only touch test on WebKit) with no CSP violations or console errors, with motion on and with reduced motion. That covers the CSS animations, the Web Animations pulse and the count-up. The browser pane's console was empty. |
+| 5 | Every request to the site's own origin | e2e passed on both browsers, and a new test fetches every icon and the manifest and checks they sit under the site's sub-path. In the browser pane: the page, one JS file, one CSS file and two fonts, all from the same origin. |
+
+Review notes:
+- No new dependencies and no new fonts. The logo, icons and wordmark are drawn for the project (docs/credits.md), so there are no third-party assets.
+- `scripts/icons.ts` runs only on a developer's machine. It builds SVG strings from constants in `src/lib/brand.ts` (no outside input), writes them to `public/`, and draws the PNGs with Playwright's Chromium, which is already a dev dependency.
+- The CSP is unchanged. Every colour and animation is a class in the built stylesheet. Components set no `style` attribute, and a unit test fails on a hex or rgb() colour in a component or page. The pulse uses `element.animate()` (Web Animations), which `style-src 'self'` allows. e2e confirms it.
+- `manifest.webmanifest` is same-origin, and `manifest-src` falls back to `default-src 'self'`. Its `start_url` and `scope` are `./`. It makes "Add to Home Screen" open the app full screen (`display: standalone`), with no service worker and no offline caching, which stay in the PWA item for later.
+- `main.tsx` adds an empty, passive `touchstart` listener so iOS shows the buttons' pressed state. It does nothing else.
+- For the phone check, `npm run dev -- --host` serves the source to the whole Wi-Fi network. Use it only on a trusted network, and stop it afterwards.
+- Rerun after the flat restyle at Kim's request (2026-10-31): typecheck, lint, unit tests (53) and e2e (39 passed, 1 skipped) pass again, with no CSP violations or requests to other origins. The restyle only changed classes and copy.
+
 ## 2026-10-30 · Phases 2 and 3 live
 
 Deployed from commit 4472f1f (Kim pushed it). Checks 1 to 3 are in the entry below, run before the push.
