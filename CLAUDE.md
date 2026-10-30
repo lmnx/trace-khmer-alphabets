@@ -3,7 +3,8 @@
 A phone-first web app where learners trace the 33 Khmer consonants, get a score, hear feedback, and earn badges. It is for Cambodians, diaspora kids and foreign learners alike. The full plan, the prompt for each phase and the open decisions are in docs/workplan.md.
 
 ## Status
-- Current phase: 0 (Setup), not started.
+- Current phase: 0 (Setup), built and checked locally on 2026-10-30. Still to do: create the GitHub repo, turn on its settings, push, and check ក on a real phone at the live link. Then Phase 1.
+- TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
 
 ## How we work
@@ -16,7 +17,7 @@ A phone-first web app where learners trace the 33 Khmer consonants, get a score,
 Vite + React + TypeScript, Tailwind CSS, perfect-freehand for ink, Vitest + Playwright. A static site with no backend, database, accounts or secrets. Node 26 LTS, pinned in .node-version.
 Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys on every push to main.
 - Routes are hash routes (#/trace/:order) because GitHub Pages can't send every path to index.html.
-- Vite base is './', so one build works at <user>.github.io/<repo>/ and on a custom domain. Reference public files through import.meta.env.BASE_URL, never with a leading "/".
+- Vite base is './', so one build works at <user>.github.io/<repo>/ and on a custom domain. Reference public files through import.meta.env.BASE_URL, never with a leading "/". CSS is the exception: write url("/fonts/…") and Vite rewrites it to a relative path at build time.
 
 ## Layout
 - src/data/letters.csv: source of truth for the 33 consonants. Reviewer corrections go here.
@@ -72,7 +73,13 @@ Run these at the end of every phase and before sharing a link. Log the date, the
 5. In the network tab, every request goes to the site's own origin.
 
 ## Commands
-Filled in at Phase 0: dev (`npm run dev -- --host` to test on a phone over Wi-Fi), build, preview, test, e2e, lint, typecheck.
+- `npm run dev`: dev server. `npm run dev -- --host` to test on a phone over Wi-Fi.
+- `npm run build`: production build into dist/, with the CSP and referrer meta tags.
+- `npm run preview`: serve dist/ locally.
+- `npm test`: Vitest unit tests (`*.test.ts` in tests/ and src/).
+- `npm run e2e`: builds, then runs Playwright (`tests/*.spec.ts`) on Android Chrome and iPhone Safari emulation, against the build served under a sub-path like GitHub Pages. Fails on any CSP violation, console error or request to another origin. Once per machine: `npx playwright install chromium webkit`.
+- `npm run lint`: ESLint. It also bans innerHTML, dangerouslySetInnerHTML, document.write and eval, and localStorage outside src/lib/progress.ts.
+- `npm run typecheck`: `tsc -b` over the app, the configs and the tests.
 
 ## Conventions
 - Mobile first: test at 375 px wide. Tap targets are at least 48 px, and grid tiles at least 64 px.

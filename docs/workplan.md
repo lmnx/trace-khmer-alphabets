@@ -166,6 +166,9 @@ Read CLAUDE.md. Scaffold a Vite + React + TypeScript app in this repo with Tailw
 
 Done when the page is live at a public link and ក renders in the chosen font on your phone.
 
+- [x] Scaffolded and checked locally: typecheck, lint, unit tests, build and e2e pass, and the first security check is logged (Oct 30, 2026)
+- [ ] Live at a public link, with ក checked on a phone
+
 ### Phase 1: Letter data and grid
 
 ```

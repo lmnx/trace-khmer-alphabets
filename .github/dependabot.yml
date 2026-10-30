@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # Let a release age a week before it is proposed, so a hijacked release
+    # has time to be caught and pulled. Security updates skip the wait.
+    cooldown:
+      default-days: 7
+    # One PR per area, so each upgrade can be tested on its own.
+    groups:
+      react:
+        patterns: [react, react-dom, "@types/react", "@types/react-dom"]
+      build:
+        patterns: [vite, "@vitejs/*", typescript, tailwindcss, "@tailwindcss/*", "@types/node"]
+      lint:
+        patterns: [eslint, "@eslint/*", typescript-eslint, "eslint-plugin-*", globals]
+      test:
+        patterns: [vitest, "@playwright/test"]
+    ignore:
+      # typescript-eslint 8.72 supports TypeScript below 6.1.
+      # Remove this once it supports TypeScript 7.
+      - dependency-name: typescript
+        versions: [">=6.1.0"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
