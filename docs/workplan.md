@@ -141,14 +141,15 @@ The MVP scores the shape of the trace, not the stroke order. I found no public s
 
 How a trace is scored:
 
-1. Draw the letter in the chosen font onto a hidden 256 × 256 canvas. Its dark pixels are the **target**.
-2. Grow the target outward by a tolerance of about 12 px. This wider area is the **allowed zone**, which forgives slightly wobbly tracing.
-3. Draw the learner's strokes onto a second hidden canvas at the same size, with the same brush width as on screen.
-4. **Coverage** is the share of target pixels that lie within brush reach of the learner's ink.
-5. **Accuracy** is the share of the learner's ink that falls inside the allowed zone.
-6. **Score** = the harmonic mean of coverage and accuracy, × 100. It stays low whenever either one is low, so scribbling over the whole box cannot win.
-7. Stars: 1 star from 60, 2 from 75, 3 from 88. These are starting values to tune in playtesting.
-8. Show the result on top of the letter: covered parts in green, missed parts in red.
+1. Draw the letter in the chosen font onto a hidden 256 × 256 canvas. Its dark pixels are the **target**. For a subscript, the target is the subscript on its own.
+2. Draw the learner's strokes onto a second hidden canvas at the same size, with the same brush width as on screen.
+3. **Coverage** is the share of target pixels within 8 px of the learner's ink, so every part of the letter has to be traced.
+4. **Precision** is how close the middle of the learner's strokes keeps to the middle of the letter's strokes. Each point along the strokes earns full credit within 2 px, and less and less further away, down to nothing at 18 px.
+5. **Score** = coverage × precision × 100. It stays low whenever either one is low, so scribbling over the whole box cannot win.
+6. Stars: 1 star from 60, 2 from 75, 3 from 88.
+7. Show the result on top of the letter: covered parts in green, missed parts in red.
+
+**Changed Oct 30, 2026.** The first version grew the target by a 12 px tolerance into an allowed zone, and scored the harmonic mean of coverage and the share of ink inside that zone. Measured on all 75 forms, it let a scribble over the whole box earn a star, and Kim found any rough trace scored 90+ on a phone. The rule above was tuned with Kim: careful traces score 99+, rough ones 50 to 80, and scribbles about 20.
 
 Keep scoring as pure functions in `lib/scoring.ts` that take pixel arrays and return numbers. Then Claude Code can unit-test it without a browser.
 
@@ -198,12 +199,16 @@ Done when drawing on a phone is smooth, the page never scrolls mid-stroke, and u
 ### Phase 3: Scoring
 
 ```
-Since Oct 30, 2026: build the target with `layoutGlyph()` at 256 x 256 and the learner's mask with `strokePath()` at `templateStrokeWidth()`, so scoring matches the screen. Leave the dotted circle out of a subscript's target, and consider drawing it fainter than the subscript.
-
 Implement src/lib/scoring.ts exactly as described in the Tracing and scoring section of CLAUDE.md: target mask from the glyph, allowed zone grown by a 12 px tolerance at 256 x 256, coverage, accuracy, harmonic-mean score 0-100, stars at 60/75/88. Keep all thresholds in one exported config object. Write Vitest tests with synthetic strokes: tracing along the glyph scores at least 90, a scribble over the whole box scores under 40, an empty canvas scores 0. When the learner taps Done, show ScoreOverlay with the score, the stars, covered areas in green and missed areas in red, and a Try again button.
 ```
 
 Done when the tests pass and five people's honest attempts get scores that feel fair to them.
+
+- [x] Built (Oct 30, 2026): scoring.ts, masks.ts and ScoreOverlay. Done shows the score, stars and a word of praise, with the letter in green and red. The scoring rule changed after measuring and phone tests with Kim (see Tracing and scoring above). The masks match the screen: the target uses `layoutGlyph()` and the learner's ink `strokePath()` at `templateStrokeWidth()`
+- [x] Subscripts are traced on their own at full size. Chrome's canvas can't stack them under ◌, so they are drawn under a stand-in ក, which is then erased
+- [x] Tuned with Kim on a phone: careful traces reach 99, rough ones score 50 to 80
+- [ ] Five people's honest attempts feel fair to them
+- [ ] Security checks, then live on the site
 
 ### Phase 4: Audio, progress and badges
 
@@ -248,7 +253,8 @@ The biggest risk is not the code. It is letting the app teach a letter shape or 
 | --- | --- | --- |
 | Letter accuracy | The font's shapes differ from how children are taught to write | Reviewer picks the font in Phase 0 |
 | Romanization | Names in the CSV follow no single system | Reviewer corrects the CSV; the app always shows the letter too |
-| Scoring feels unfair | Thin strokes or small letter parts are hard to hit | Tune the tolerance and star levels in the config object |
+| Scoring feels unfair | Thin strokes or small letter parts are hard to hit | Tune `reach`, `wobble`, `precision` and the star levels in `SCORING` |
+| Colour-blind learners | The result shows traced parts in green and missed parts in red, which some learners can't tell apart | Phase 5: add a second cue, such as a pattern or outline on missed parts |
 | Audio on iPhone | Sound does not play until a tap | Play only from a button tap |
 | Scope creep | Vowels get added before the core loop works (numerals and subscripts joined the MVP on purpose on Oct 30) | Ship the MVP first |
 | Subscripts | Subscripts are small, some look alike (្ដ and ្ត) and some sit beside the letter (្រ, ្ស), so they are hard to trace and to score fairly | The reviewer checks every subscript; tune scoring for small shapes in Phase 3 |

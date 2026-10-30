@@ -2,6 +2,24 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-30 · Phases 2 and 3 (tracing canvas, scoring)
+
+Run before committing Phase 3 and before the next push. Kim deferred these checks while building. Phase 2 was pushed in between (7f42ce7), but CI run 41083567809 failed, so it was never deployed: the CI gate held. This review covers everything since the last deploy, 0aabbd4. Checks 4 and 5 ran against the local production build, and need repeating on the live site after the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | `npm audit --omit=dev` | 0 vulnerabilities. Full `npm audit`, dev included: 0. `npm audit signatures`: 88 packages have verified attestations. `npm install-scripts ls`: no packages with unreviewed install scripts. |
+| 2 | `npm outdated`, Dependabot PRs | `typescript` 7.0.2 is still held. `eslint` 10.14.0 (dev only, published today) waits for Dependabot's 7-day cooldown. No open PRs. |
+| 3 | `/security-review` | No findings, over `git diff 0aabbd4` plus the new files. The skill's own diff only sees unpushed commits, and Phase 2 was already pushed, so the review was pointed at the range since the last deploy. |
+| 4 | CSP meta tag, no violations | e2e passed on Android Chrome and iPhone Safari emulation with no CSP violations or console errors, through drawing, Undo, Clear, Done, Try again and the arrows. The CSP and referrer tags are unchanged. |
+| 5 | Every request to the site's own origin | e2e passed on both browsers. No new URLs in the bundle. |
+
+Review notes:
+- New dependency: perfect-freehand 1.2.3. MIT, by the tldraw author, published 2026-02-01, no dependencies and no install scripts. Its 4.5 KB bundle is pure vector maths: no network, eval, DOM or storage. The lockfile's sha512 matches the registry.
+- fsevents 2.3.3 (an optional, macOS-only dev dependency of Vite, already in the lockfile) has an install script. npm's default blocks it, and it stays unapproved.
+- The canvas reads pixels only from canvases the app itself creates (getImageData), so no cross-origin image is involved. Strokes are kept in memory only: nothing is stored or sent.
+- The CI failure was an e2e timing race, not an app fault. On CI's slower WebKit, a test read the canvas size before the canvas had resized. Every trace test now waits until the guide is drawn, and the trace tests passed 3 runs in a row with 4 parallel workers.
+
 ## 2026-10-30 · Phase 1 revision live
 
 Deployed from commit 0aabbd4 (Kim pushed it). Checks 1 to 3 are in the entry below, run before the push.

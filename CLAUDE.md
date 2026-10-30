@@ -4,8 +4,9 @@ A phone-first web app where learners trace the Khmer numerals and the 33 consona
 
 ## Status
 - Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone.
-- Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is live from 0aabbd4, and Kim checked it on phones. Phase 1 done 2026-10-30, except that ឡ now also shows alone in the Both view, which isn't pushed yet.
-- Phase 2 (Tracing canvas) built 2026-10-30, and drawing checked on Kim's phone over Wi-Fi. Not yet pushed. Kim deferred the security checks until before the push. Next: Phase 3 (Scoring).
+- Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is live from 0aabbd4, and Kim checked it on phones. Phase 1 done 2026-10-30. ឡ showing alone in the Both view goes live with Phase 2.
+- Phase 2 (Tracing canvas) built 2026-10-30, and drawing checked on Kim's phone over Wi-Fi. Kim pushed it (7f42ce7), but CI run 41083567809 failed on a timing race in an e2e test (it read the canvas size before the canvas had resized), so it was never deployed. The fix is in Phase 3's commits.
+- Phase 3 (Scoring) built and tuned with Kim on a phone 2026-10-30. The scoring rule changed (see Tracing and scoring). Still to do: five people's honest attempts feel fair to them. Next: Phase 4 (Audio, progress and badges).
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
 
@@ -32,6 +33,7 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 - src/lib/guide.ts: lays out and draws the guide glyph in a square, and gives the template's stroke width.
 - src/lib/ink.ts: the brush and `strokePath()`, which turns a stroke's points into a perfect-freehand outline.
 - src/lib/scoring.ts: pure scoring functions, no DOM access.
+- src/lib/masks.ts: draws the 256 x 256 masks and stroke paths that scoring.ts compares.
 - src/lib/progress.ts: the only module that touches localStorage.
 - src/lib/audio.ts: the only module that plays sound.
 - src/i18n/en.ts: all UI text. km.ts comes later with the Khmer toggle.
@@ -50,13 +52,15 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 
 ## Tracing and scoring
 - Score shape, not stroke order.
-- Work at 256 x 256. Target = glyph pixels. Allowed zone = target grown by 12 px.
-- Coverage = share of target within brush reach of the learner's ink.
-- Accuracy = share of the learner's ink inside the allowed zone.
-- Score = harmonic mean of coverage and accuracy x 100. Stars at 60 / 75 / 88.
-- All thresholds live in one exported config object.
+- Work at 256 x 256. Target = the glyph's pixels (for a subscript, the subscript on its own).
+- Coverage = share of the target within 8 px (`reach`) of the learner's ink, so every part has to be traced.
+- Precision = how close the middle of the learner's strokes keeps to the middle of the letter's strokes. Points 1 px apart along the strokes each earn full credit within 2 px (`wobble`), then 1 - stray², with stray running from 0 there to 1 at 18 px (`precision`). The points are averaged.
+- Score = coverage x precision x 100. Stars at 60 / 75 / 88.
+- Changed 2026-10-30, measured on all forms and tuned with Kim on a phone. The first rule (harmonic mean of coverage and accuracy, with a 12 px allowed zone) let scribbles earn a star and gave any rough trace 90+. Now careful traces score 99+, rough ones 50 to 80, and scribbles about 20. The reasons and numbers are in src/lib/scoring.ts.
+- All thresholds live in one exported config object, `SCORING` in src/lib/scoring.ts.
+- Canvas text in Chrome doesn't stack a subscript under ◌, so the canvas draws a subscript under a stand-in ក and erases the ក (`drawTraceable()` in guide.ts). HTML text, as in the grid, stacks it fine.
 - Stroke points are stored as shares of the canvas (0 to 1). perfect-freehand needs pixel-sized units, so strokes are built in a 1000-unit INK_SPACE and scaled to the canvas.
-- The ink is as wide as the template's own strokes: STROKE_EM (0.07, measured for Kantumruy Pro) times the guide's font size, with no thinning. Scoring uses the same `layoutGlyph()`, `templateStrokeWidth()` and `strokePath()`, so the mask lines up with what the learner sees.
+- The ink is as wide as the template's own strokes: STROKE_EM (0.07, measured for Kantumruy Pro; 0.06 for a subscript on its own) times the guide's font size, with no thinning. Scoring uses the same `layoutGlyph()`, `templateStrokeWidth()` and `strokePath()`, so the mask lines up with what the learner sees.
 
 ## Audio
 - MVP: short sound effects only (stroke, success, stars, badge).
