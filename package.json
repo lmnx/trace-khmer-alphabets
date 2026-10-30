@@ -14,7 +14,8 @@
     "e2e": "vite build && playwright test",
     "lint": "eslint .",
     "typecheck": "tsc -b",
-    "letters": "node scripts/generate-letters.ts"
+    "letters": "node scripts/generate-letters.ts",
+    "icons": "node scripts/icons.ts"
   },
   "dependencies": {
     "perfect-freehand": "1.2.3",

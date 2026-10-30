@@ -5,14 +5,15 @@ import { showHome } from '../lib/router';
 
 // Letter, Subscript or Both, as radio buttons styled as one segmented control.
 // Each option shows ក in that form, so it reads without knowing the words.
+// The chosen one lights up in mint.
 export function FormToggle({ form, fontReady }: { form: Form; fontReady: boolean }) {
   return (
-    <fieldset className="grid grid-cols-3 gap-1 rounded-2xl bg-stone-200 p-1">
+    <fieldset className="grid grid-cols-3 gap-1 rounded-2xl bg-sunk p-1">
       <legend className="sr-only">{en.grid.formLegend}</legend>
       {FORMS.map((option) => (
         <label
           key={option}
-          className="flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-xl text-sm text-stone-700 has-checked:bg-white has-checked:font-semibold has-checked:text-stone-900 has-checked:shadow-sm has-focus-visible:outline-2 has-focus-visible:outline-stone-900"
+          className="flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-xl text-sm font-medium text-fg-muted hover:text-fg has-checked:bg-mint has-checked:font-bold has-checked:text-on-mint has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-mint motion-safe:transition-colors"
         >
           <input
             type="radio"

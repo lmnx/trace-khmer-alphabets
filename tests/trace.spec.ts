@@ -40,9 +40,16 @@ async function alpha(page: Page, at?: Share): Promise<number> {
 
 // Opens a trace page and waits until the guide is drawn: by then the font has
 // loaded and the canvas has been sized, so strokes count and pixels can be read.
+// Then waits for the page's entrance to finish, so the canvas has stopped
+// moving before anything is drawn on it.
 async function openTrace(page: Page, href: string) {
   await page.goto(`./${href}`);
   await expect.poll(() => alpha(page)).toBeGreaterThan(0);
+  await settle(page);
+}
+
+async function settle(page: Page) {
+  await page.evaluate(() => Promise.allSettled(document.getAnimations().map((animation) => animation.finished)));
 }
 
 test('the trace page shows the character faintly on a sharp, square canvas that fits the screen', async ({ page }) => {
@@ -237,19 +244,27 @@ async function drawPath(page: Page, points: Share[]) {
   await page.mouse.up();
 }
 
-// How many pixels of the canvas are mostly red, and mostly green.
-async function resultColours(page: Page): Promise<{ red: number; green: number }> {
+// How many opaque pixels of the canvas are nearer the theme's covered colour
+// (green) than its missed colour (rose), and the other way round.
+async function resultColours(page: Page): Promise<{ covered: number; missed: number }> {
   return canvas(page).evaluate((element) => {
     const el = element as HTMLCanvasElement;
     const data = el.getContext('2d')?.getImageData(0, 0, el.width, el.height).data ?? new Uint8ClampedArray();
-    let red = 0;
-    let green = 0;
+    const style = getComputedStyle(document.documentElement);
+    const rgb = (name: string) => {
+      const value = Number.parseInt(style.getPropertyValue(name).trim().slice(1), 16);
+      return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+    };
+    const [coveredRgb, missedRgb] = [rgb('--covered'), rgb('--missed')];
+    const distance = (i: number, to: number[]) => to.reduce((sum, c, k) => sum + (data[i + k] - c) ** 2, 0);
+    let covered = 0;
+    let missed = 0;
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] < 128) continue;
-      if (data[i] > 150 && data[i + 1] < 90) red++;
-      if (data[i + 1] > 120 && data[i] < 90) green++;
+      if (distance(i, coveredRgb) < distance(i, missedRgb)) covered++;
+      else missed++;
     }
-    return { red, green };
+    return { covered, missed };
   });
 }
 
@@ -267,7 +282,7 @@ test('a careful trace of ក scores 3 stars and shows the letter in green', asyn
   expect(score).toBeGreaterThanOrEqual(88);
   await expect(page.getByRole('img', { name: en.score.stars(3) })).toBeVisible();
   const colours = await resultColours(page);
-  expect(colours.green).toBeGreaterThan(colours.red * 10);
+  expect(colours.covered).toBeGreaterThan(colours.missed * 10);
 });
 
 // Lines back and forth across the whole canvas, `spacing` apart (a share of its size).
@@ -305,7 +320,7 @@ test('colouring in the whole box earns no star', async ({ page }) => {
   await expect(page.getByRole('img', { name: en.score.stars(0) })).toBeVisible();
 });
 
-test('half a letter earns no star and shows the missed part in red', async ({ page }) => {
+test('half a letter earns no star and shows the missed part in rose', async ({ page }) => {
   await openTrace(page, traceHref(1));
   const [bar] = await guideRuns(page, 'column', 0.5);
   const [barRow] = await guideRuns(page, 'row', middle(bar));
@@ -318,8 +333,8 @@ test('half a letter earns no star and shows the missed part in red', async ({ pa
   expect(await scoreShown(page)).toBeLessThan(60);
   await expect(page.getByRole('img', { name: en.score.stars(0) })).toBeVisible();
   const colours = await resultColours(page);
-  expect(colours.red).toBeGreaterThan(colours.green);
-  expect(colours.green).toBeGreaterThan(0);
+  expect(colours.missed).toBeGreaterThan(colours.covered);
+  expect(colours.covered).toBeGreaterThan(0);
 });
 
 // The guide's ink box on the canvas, as shares of its size.
@@ -346,4 +361,34 @@ test('a subscript is drawn on its own, as big as a letter', async ({ page }) => 
     expect(Math.max(box.width, box.height), `letter ${order}`).toBeGreaterThan(0.75);
     expect(Math.max(box.width, box.height), `letter ${order}`).toBeLessThan(0.85);
   }
+});
+
+// The number on screen, which counts up. Screen readers get the score from the
+// status's hidden text instead.
+const countedScore = (page: Page) => page.getByRole('status').locator('p[aria-hidden="true"]');
+
+test('the score counts up to the final score and lights all three stars', async ({ page }) => {
+  await openTrace(page, traceHref(1));
+  await traceKa(page);
+  await page.getByRole('button', { name: en.trace.done }).tap();
+
+  const score = await scoreShown(page);
+  await expect(countedScore(page)).toHaveText(String(score));
+  // Every star is lit once the count is over.
+  await expect(page.getByRole('img', { name: en.score.stars(3) }).locator('svg.fill-star')).toHaveCount(3);
+});
+
+test('with reduced motion nothing animates, and the score shows at once', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  await expect(page.getByRole('heading', { name: en.appTitle })).toBeVisible();
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+
+  await openTrace(page, traceHref(1));
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  await traceKa(page);
+  await page.getByRole('button', { name: en.trace.done }).tap();
+  const score = await scoreShown(page);
+  expect(await countedScore(page).textContent()).toBe(String(score));
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
 });

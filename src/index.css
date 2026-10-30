@@ -35,18 +35,110 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/*
+ * The theme: "Star path", a midnight page with star yellow, mint, green and
+ * rose. Components use only the semantic colours below, through utilities
+ * like bg-surface and text-fg-muted, never hex values or Tailwind's own
+ * palette (switched off in @theme). So a second theme later is one more block
+ * that sets these variables, under a selector such as [data-theme="light"].
+ * The canvas reads --guide, --ink, --covered and --missed through
+ * src/lib/theme.ts. tests/theme.test.ts checks every text pair against
+ * WCAG AA.
+ */
+:root {
+  color-scheme: dark;
+  --page: #16153a;
+  --surface: #26245e;
+  --surface-hover: #302d72;
+  --sunk: #1e1c4b;
+  --line: #3b3880;
+  --fg: #ffffff;
+  --fg-muted: #c9c6f5;
+  --fg-faint: #8d89c9;
+  --star: #ffd84d;
+  --on-star: #16153a;
+  --go: #6ee07a;
+  --on-go: #16153a;
+  --mint: #4fe3c1;
+  --on-mint: #16153a;
+  --guide: #ffffff;
+  --ink: #4fe3c1;
+  --covered: #6ee07a;
+  --missed: #ff7a90;
+}
+
 @theme {
+  /* Only the theme's own colours exist as utilities. */
+  --color-*: initial;
   --font-sans: "Kantumruy Pro", ui-sans-serif, system-ui, sans-serif;
+
+  /* Screens come in, the score card rises. Used with motion-safe: only. */
+  --animate-enter: enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade-in: fade-in 220ms ease-out both;
+  --animate-rise: rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      translate: 0 10px;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 16px;
+      scale: 0.97;
+    }
+  }
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-sunk: var(--sunk);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+  --color-star: var(--star);
+  --color-on-star: var(--on-star);
+  --color-go: var(--go);
+  --color-on-go: var(--on-go);
+  --color-mint: var(--mint);
+  --color-on-mint: var(--on-mint);
+  --color-ink: var(--ink);
+  --color-covered: var(--covered);
+  --color-missed: var(--missed);
 }
 
 /*
- * An explicit light page, so a browser or in-app view in dark mode never
- * paints a dark backdrop behind the dark text. Dark mode would be its own task.
+ * The design is flat: solid colours, no shadows or borders for depth. A
+ * button or tile shrinks a little while pressed, so a tap still feels
+ * answered. Scale is a transform, so pressing never shifts the layout.
  */
+@utility press {
+  &:active:not(:disabled) {
+    scale: 0.96;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    transition:
+      scale 120ms ease-out,
+      background-color 150ms,
+      color 150ms;
+  }
+}
+
 @layer base {
   html {
-    color-scheme: light;
-    background-color: var(--color-white);
-    color: var(--color-stone-900);
+    background-color: var(--page);
+    color: var(--fg);
+    /* Buttons and tiles show their own pressed state instead. */
+    -webkit-tap-highlight-color: transparent;
   }
 }

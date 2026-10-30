@@ -4,23 +4,29 @@ import { useKhmerFontReady } from '../lib/fonts';
 import { drawTraceable, layoutGlyph, templateStrokeWidth } from '../lib/guide';
 import { INK_SPACE, strokePath, type Point, type Stroke } from '../lib/ink';
 import { resultImage, traceMasks } from '../lib/masks';
+import { prefersReducedMotion, pulse } from '../lib/motion';
 import { scoreTrace, type TraceScore } from '../lib/scoring';
-import { COVERED_COLOR, MISSED_COLOR, ScoreOverlay } from './ScoreOverlay';
+import { canvasColors } from '../lib/theme';
+import { CheckIcon, ClearIcon, UndoIcon } from './icons';
+import { ScoreOverlay } from './ScoreOverlay';
+import { BUTTON, GO_BUTTON } from './styles';
 
-const GUIDE_COLOR = '#1c1917'; // stone-900
 const GUIDE_ALPHA = 0.15;
-const INK_COLOR = '#0369a1'; // sky-700
-// After Done, the letter shows in green and red, with the ink faintly over it.
+// After Done, the letter shows in green and rose, with the ink faintly over it.
 const RESULT_ALPHA = 0.85;
 const INK_OVER_RESULT_ALPHA = 0.3;
 
 // A square canvas with the character drawn faintly, for tracing with a finger,
 // pen or mouse. Strokes are kept as arrays of points; Undo drops the last one.
-// Done scores the strokes and shows the result until Try again.
+// Done scores the strokes and shows the result until Try again. A ring pulses
+// round the canvas as each stroke ends, and again, in the result's colour,
+// after Done.
 export function TraceCanvas({ text }: { text: string }) {
   const fontReady = useKhmerFontReady();
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ringRef = useRef<HTMLSpanElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(0);
   const [strokes, setStrokes] = useState<readonly Stroke[]>([]);
   const [result, setResult] = useState<TraceScore | null>(null);
@@ -47,12 +53,13 @@ export function TraceCanvas({ text }: { text: string }) {
     ctx.clearRect(0, 0, pixels, pixels);
     // Nothing is drawn, and no stroke can start, until the font has loaded.
     if (!fontReady) return;
+    const colors = canvasColors();
     const layout = layoutGlyph(ctx, text, pixels);
-    ctx.fillStyle = GUIDE_COLOR;
+    ctx.fillStyle = colors.guide;
     if (result) {
       ctx.globalAlpha = RESULT_ALPHA;
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(resultImage(result.covered, result.missed, COVERED_COLOR, MISSED_COLOR), 0, 0, pixels, pixels);
+      ctx.drawImage(resultImage(result.covered, result.missed, colors.covered, colors.missed), 0, 0, pixels, pixels);
     } else {
       ctx.globalAlpha = GUIDE_ALPHA;
       drawTraceable(ctx, text, layout);
@@ -62,7 +69,7 @@ export function TraceCanvas({ text }: { text: string }) {
     // drawn on its own layer and faded as a whole, so overlaps don't darken.
     const width = templateStrokeWidth(layout, pixels);
     const ink = result ? inkLayer(pixels) : ctx;
-    ink.fillStyle = INK_COLOR;
+    ink.fillStyle = colors.ink;
     ink.setTransform(pixels / INK_SPACE, 0, 0, pixels / INK_SPACE, 0, 0);
     ctx.globalAlpha = 1;
     for (const stroke of strokes) ink.fill(strokePath(stroke, width, true));
@@ -90,6 +97,14 @@ export function TraceCanvas({ text }: { text: string }) {
   }, [paint, size]);
 
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
+
+  // Once the result is up: a bigger pulse in its colour, and the score card
+  // scrolled into view on short screens.
+  useEffect(() => {
+    if (!result) return;
+    pulse(ringRef.current, 1.06, 700);
+    resultRef.current?.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  }, [result]);
 
   function repaintSoon() {
     if (frame.current) return;
@@ -125,6 +140,7 @@ export function TraceCanvas({ text }: { text: string }) {
     if (!stroke || event.pointerId !== stroke.pointerId) return;
     drawing.current = null;
     setStrokes((previous) => [...previous, stroke.points]);
+    pulse(ringRef.current);
   }
 
   function score() {
@@ -138,37 +154,48 @@ export function TraceCanvas({ text }: { text: string }) {
   }
 
   const empty = strokes.length === 0;
+  const ringColor = result ? (result.stars > 0 ? 'ring-covered' : 'ring-missed') : 'ring-ink';
   return (
-    <div className="flex w-full flex-col items-center gap-3">
-      <div
-        ref={frameRef}
-        className="aspect-square w-[min(100%,max(16rem,calc(100dvh_-_13rem)))] overflow-hidden rounded-2xl bg-white ring-1 ring-stone-300"
-      >
-        {/* touch-action: none stops the page scrolling or zooming mid-stroke. */}
-        <canvas
-          ref={canvasRef}
-          role="img"
-          aria-label={en.trace.canvas}
-          data-strokes={strokes.length}
-          className="block size-full cursor-crosshair touch-none select-none [-webkit-touch-callout:none]"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerEnd}
-          onPointerCancel={onPointerEnd}
-          onContextMenu={(event) => event.preventDefault()}
+    <div className="flex w-full flex-col items-center gap-4 motion-safe:animate-fade-in">
+      <div className="relative w-[min(100%,max(16rem,calc(100dvh_-_14rem)))]">
+        {/* No border on the frame: with one, WebKit makes the canvas 2 px
+            shorter than it is wide. */}
+        <div ref={frameRef} className="aspect-square overflow-hidden rounded-3xl bg-surface">
+          {/* touch-action: none stops the page scrolling or zooming mid-stroke. */}
+          <canvas
+            ref={canvasRef}
+            role="img"
+            aria-label={en.trace.canvas}
+            data-strokes={strokes.length}
+            className="block size-full cursor-crosshair touch-none select-none [-webkit-touch-callout:none]"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerEnd}
+            onPointerCancel={onPointerEnd}
+            onContextMenu={(event) => event.preventDefault()}
+          />
+        </div>
+        {/* The pulse: a ring over the frame, invisible until it animates. */}
+        <span
+          ref={ringRef}
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-0 rounded-3xl opacity-0 ring-4 ${ringColor}`}
         />
       </div>
       {result ? (
-        <ScoreOverlay result={result} onTryAgain={tryAgain} />
+        <ScoreOverlay ref={resultRef} result={result} onTryAgain={tryAgain} />
       ) : (
         <div className="grid w-[min(100%,24rem)] grid-cols-3 gap-2">
           <button type="button" className={BUTTON} disabled={empty} onClick={() => setStrokes(strokes.slice(0, -1))}>
+            <UndoIcon />
             {en.trace.undo}
           </button>
           <button type="button" className={BUTTON} disabled={empty} onClick={() => setStrokes([])}>
+            <ClearIcon />
             {en.trace.clear}
           </button>
-          <button type="button" className={DONE_BUTTON} disabled={empty} onClick={score}>
+          <button type="button" className={GO_BUTTON} disabled={empty} onClick={score}>
+            <CheckIcon />
             {en.trace.done}
           </button>
         </div>
@@ -190,8 +217,3 @@ function pointOn(canvas: HTMLCanvasElement, event: { clientX: number; clientY: n
   const box = canvas.getBoundingClientRect();
   return [(event.clientX - box.left) / box.width, (event.clientY - box.top) / box.height];
 }
-
-const BUTTON =
-  'min-h-12 rounded-xl bg-white px-3 text-base font-medium text-stone-800 ring-1 ring-stone-300 enabled:hover:bg-stone-100 enabled:active:bg-stone-200 disabled:text-stone-400 disabled:ring-stone-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900 motion-safe:transition-colors';
-const DONE_BUTTON =
-  'min-h-12 rounded-xl bg-sky-700 px-3 text-base font-semibold text-white enabled:hover:bg-sky-800 enabled:active:bg-sky-900 disabled:bg-stone-200 disabled:text-stone-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900 motion-safe:transition-colors';

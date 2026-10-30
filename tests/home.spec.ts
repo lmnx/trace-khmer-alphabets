@@ -157,3 +157,24 @@ test('hash routes open a letter and come back home', async ({ page }) => {
   await expect(page.getByRole('heading', { name: en.appTitle })).toBeVisible();
   expect(hash(page)).toBe('#/');
 });
+
+test('the icons and the manifest come from the site itself, under its sub-path', async ({ page, request, baseURL }) => {
+  await page.goto('./');
+  const hrefs = await page
+    .locator('link[rel~="icon"], link[rel="apple-touch-icon"], link[rel="manifest"]')
+    .evaluateAll((links) => links.map((link) => (link as HTMLLinkElement).href));
+  expect(hrefs).toHaveLength(4);
+  for (const href of hrefs) {
+    expect(href.startsWith(baseURL ?? '-'), href).toBe(true);
+    expect((await request.get(href)).status(), href).toBe(200);
+  }
+
+  const manifestUrl = hrefs.find((href) => href.endsWith('.webmanifest')) ?? '';
+  const manifest = (await (await request.get(manifestUrl)).json()) as { short_name: string; icons: { src: string }[] };
+  expect(manifest.short_name).toBe(en.appTitle);
+  for (const icon of manifest.icons) {
+    const url = new URL(icon.src, manifestUrl).href;
+    expect(url.startsWith(baseURL ?? '-'), url).toBe(true);
+    expect((await request.get(url)).status(), url).toBe(200);
+  }
+});

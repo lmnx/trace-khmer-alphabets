@@ -1,4 +1,4 @@
-// Phase 4: series badges and the Apsara badge for all 33.
+// Phase 4: the night sky, with a constellation per set.
 export function BadgeShelf() {
   return null;
 }
