@@ -1,6 +1,8 @@
 import { expect, test as base } from '@playwright/test';
 import { CSP } from '../plugins/csp';
+import { letters } from '../src/data/letters';
 import { en } from '../src/i18n/en';
+import { traceHref } from '../src/lib/router';
 
 // Every test fails on a CSP violation, a console error, an uncaught
 // exception or a request to another origin.
@@ -33,21 +35,67 @@ const test = base.extend<{ siteGuard: void }>({
   ],
 });
 
-test('home page shows the title and ក in Kantumruy Pro', async ({ page }) => {
+test('home page shows the title and every letter in Kantumruy Pro', async ({ page }) => {
   const khmerFont = page.waitForResponse((response) => response.url().endsWith('/fonts/kantumruy-pro-khmer.woff2'));
   await page.goto('./');
 
   await expect(page.getByRole('heading', { name: en.appTitle })).toBeVisible();
   expect((await khmerFont).status()).toBe(200);
 
-  // The letter stays invisible until the font has loaded.
-  const letter = page.getByText('ក');
-  await expect(letter).toBeVisible();
-  expect(await letter.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/^"?Kantumruy Pro"?,/);
+  // The letters stay invisible until the font has loaded.
+  const khmer = page.getByRole('main').locator('[lang="km"]');
+  await expect(khmer).toHaveCount(letters.length);
+  for (const letter of await khmer.all()) await expect(letter).toBeVisible();
+  expect(await khmer.first().evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/^"?Kantumruy Pro"?,/);
   const loadedKhmerFaces = await page.evaluate(() =>
     [...document.fonts].filter((face) => face.status === 'loaded' && face.unicodeRange.includes('U+1780')).length,
   );
   expect(loadedKhmerFaces).toBe(1);
+});
+
+test('the grid shows the 33 letters in two series, in order', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.getByRole('main').getByRole('link')).toHaveCount(33);
+  await expect(page.getByRole('region')).toHaveCount(2);
+
+  for (const series of [1, 2] as const) {
+    const expected = letters.filter((letter) => letter.series === series);
+    const tiles = page.getByRole('region', { name: en.grid.series[series] }).getByRole('link');
+    await expect(tiles).toHaveCount(expected.length);
+    for (const [i, letter] of expected.entries()) {
+      const tile = tiles.nth(i);
+      await expect(tile).toHaveAttribute('href', traceHref(letter.order));
+      await expect(tile.locator('[lang="km"]')).toHaveText(letter.char);
+      await expect(tile).toContainText(letter.name);
+    }
+  }
+});
+
+test('tiles are at least 64 px square on narrow phones, with no sideways scroll', async ({ page }) => {
+  for (const width of [320, 375]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('./');
+    const tiles = page.getByRole('main').getByRole('link');
+    await expect(tiles).toHaveCount(letters.length);
+    const sizes = await tiles.evaluateAll((els) =>
+      els.map((el) => {
+        const box = el.getBoundingClientRect();
+        return Math.min(box.width, box.height);
+      }),
+    );
+    expect(Math.min(...sizes), `smallest tile at ${width} px`).toBeGreaterThanOrEqual(64);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  }
+});
+
+test('tapping a tile opens that letter on the trace page', async ({ page }) => {
+  const secondSeries = letters.filter((letter) => letter.series === 2);
+  for (const letter of [letters[0], secondSeries[secondSeries.length - 1]]) {
+    await page.goto('./');
+    await page.getByRole('main').locator(`a[href="${traceHref(letter.order)}"]`).tap();
+    await expect(page.getByRole('heading', { name: en.trace.heading(letter.order) })).toBeVisible();
+    expect(new URL(page.url()).hash).toBe(traceHref(letter.order));
+  }
 });
 
 test('the build carries the CSP and referrer meta tags before any script', async ({ page }) => {

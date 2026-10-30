@@ -1,17 +1,14 @@
+import { LetterGrid } from '../components/LetterGrid';
 import { en } from '../i18n/en';
-import { useKhmerFontReady } from '../lib/fonts';
-
-// Phase 1 replaces the single letter with the LetterGrid.
-const SAMPLE_LETTER = 'ក';
 
 export function Home() {
-  const fontReady = useKhmerFontReady();
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-2xl font-semibold text-stone-900">{en.appTitle}</h1>
-      <p lang="km" className={`text-[10rem] leading-tight text-stone-900 ${fontReady ? '' : 'invisible'}`}>
-        {SAMPLE_LETTER}
-      </p>
+    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 py-8 pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))]">
+      <header className="text-center">
+        <h1 className="text-2xl font-semibold text-stone-900">{en.appTitle}</h1>
+        <p className="mt-1 text-stone-600">{en.home.intro}</p>
+      </header>
+      <LetterGrid />
     </main>
   );
 }
