@@ -66,7 +66,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['*.config.ts', 'plugins/**/*.ts', 'tests/**/*.ts'],
+    files: ['*.config.ts', 'plugins/**/*.ts', 'scripts/**/*.ts', 'tests/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
 ]);
