@@ -1,4 +1,5 @@
-@import "tailwindcss";
+/* Scan only src/ for class names, not the Markdown docs. */
+@import "tailwindcss" source(".");
 
 /*
  * Kantumruy Pro, self-hosted from public/fonts (source and licence in
@@ -36,4 +37,16 @@
 
 @theme {
   --font-sans: "Kantumruy Pro", ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * An explicit light page, so a browser or in-app view in dark mode never
+ * paints a dark backdrop behind the dark text. Dark mode would be its own task.
+ */
+@layer base {
+  html {
+    color-scheme: light;
+    background-color: var(--color-white);
+    color: var(--color-stone-900);
+  }
 }
