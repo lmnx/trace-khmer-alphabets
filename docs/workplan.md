@@ -226,8 +226,8 @@ Done when typecheck, lint, unit tests, build and e2e pass with no CSP violations
 - [x] Grid, trace screen and ScoreOverlay restyled: a pulse round the canvas on each stroke and after Done, the score counting up with stars popping in as it passes each level, and pages fading in. All of it is off with reduced motion
 - [x] Changed to flat design at Kim's request (Oct 31, 2026): solid colours with no lips, shadows or borders, and buttons that shrink a little while pressed. The home headline is now "See how good your Khmer writing is!"
 - [x] Contrast (a unit test checks every text pair against AA), tap targets and 375 px checked, e2e passing, security checks 1, 2, 4 and 5 logged (Oct 31, 2026)
-- [ ] Seen on Kim's phone
-- [ ] Committed, /security-review run, then live checks after Kim's push
+- [x] Seen on Kim's phone (Oct 31, 2026)
+- [x] Committed (7943419, 233d68d), /security-review with no findings, live from 233d68d with the live checks logged (Oct 31, 2026)
 
 ### Phase 4: Night sky story and progression
 

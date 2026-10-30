@@ -2,6 +2,18 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-31 · Phase 3.5 live
+
+Deployed from commit 233d68d (Kim pushed it). Checks 1 to 3 are in the entry below, run before the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 4 | CSP meta tag, no violations, HTTPS | The live `index.html`, JS, CSS, favicons, apple-touch-icon and manifest are byte-for-byte identical to the local build, so the CSP and referrer tags still come first in `<head>`. The browser pane's console was empty at 375 px on the home page and the trace page. `http://` gets a 301 redirect to `https://`. |
+| 5 | Every request to the site's own origin | The page, one JS file, one CSS file and two fonts, all from `lmnx.github.io/trace-khmer-alphabets/`. The manifest's icons (icon.svg, icon-192, icon-512, the maskable icon) and logo.svg all return 200 from the same path. No other origins. |
+
+- CI run 41098386869: "Check and build" (Playwright: 39 passed, 1 skipped, which is the Chromium-only touch test on WebKit) and "Deploy to GitHub Pages" both succeeded. That run traced, pressed Done and watched the count-up with motion on, against this exact build. The only annotations are the known `ubuntu-latest` → Ubuntu 26 notices.
+- Phone check: Kim checked the flat makeover on a phone before approving the commit.
+
 ## 2026-10-31 · Phase 3.5 (Brand and makeover)
 
 Run before committing. Check 3 runs after the commit and before the push, and checks 4 and 5 need repeating on the live site after the push. These ran against the local production build.
