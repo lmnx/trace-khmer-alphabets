@@ -1,10 +1,10 @@
 # Trace the Khmer Alphabet
 
-A phone-first web app where learners trace the 33 Khmer consonants, get a score, hear feedback, and earn badges. It is for Cambodians, diaspora kids and foreign learners alike. The full plan, the prompt for each phase and the open decisions are in docs/workplan.md.
+A phone-first web app where learners trace the Khmer numerals and the 33 consonants, alone or with their subscripts, get a score, hear feedback, and earn badges. It is for Cambodians, diaspora kids and foreign learners alike. The full plan, the prompt for each phase and the open decisions are in docs/workplan.md.
 
 ## Status
 - Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone.
-- Phase 1 (Letter data and grid) built and checked locally 2026-10-30. Still to do: push, then check all 33 tiles on iOS Safari and Android Chrome. Then Phase 2 (Tracing canvas).
+- Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is checked locally but not yet committed. Still to do: Kim pushes, then checks the grid on iOS Safari and Android Chrome. Then Phase 2 (Tracing canvas).
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
 
@@ -12,23 +12,25 @@ A phone-first web app where learners trace the 33 Khmer consonants, get a score,
 - Claude is project manager and security advisor as well as developer. Raise risks, scope creep and outdated dependencies without waiting to be asked.
 - One phase per session, in the order in docs/workplan.md. A phase is done when its done-criteria pass on a real phone.
 - At the end of every phase: run the security checks below, update Status here, tick the phase in docs/workplan.md, and propose a commit.
-- Never commit, push or deploy without asking.
+- Never commit without asking. Kim pushes to GitHub (a push to main deploys), so Claude never runs git push. After a push, Claude checks the deploy run and the live site.
 
 ## Stack
 Vite + React + TypeScript, Tailwind CSS, perfect-freehand for ink, Vitest + Playwright. A static site with no backend, database, accounts or secrets. Node 26 LTS, pinned in .node-version.
 Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys on every push to main.
-- Routes are hash routes (#/trace/:order) because GitHub Pages can't send every path to index.html.
+- Routes are hash routes because GitHub Pages can't send every path to index.html: #/, #/subscript and #/both for the grid; #/trace/:order, #/trace/:order/subscript and #/trace/:order/both for a letter; #/trace/number/:digit for a number. src/lib/router.ts accepts nothing else.
 - Vite base is './', so one build works at <user>.github.io/<repo>/ and on a custom domain. Reference public files through import.meta.env.BASE_URL, never with a leading "/". CSS is the exception: write url("/fonts/…") and Vite rewrites it to a relative path at build time.
 
 ## Layout
 - src/data/letters.csv: source of truth for the 33 consonants. Reviewer corrections go here.
 - src/data/letters.ts: generated from letters.csv by `npm run letters`. Never edit by hand.
 - scripts/: the letters.ts generator. letters-csv.ts checks every CSV row and renders the module.
+- src/data/numerals.ts: ០ to ៩, computed from their code points. They are labelled with the digits 0 to 9, so they need no CSV.
+- src/lib/forms.ts: the Letter / Subscript / Both forms and `glyph()`, the text each form shows.
 - src/lib/scoring.ts: pure scoring functions, no DOM access.
 - src/lib/progress.ts: the only module that touches localStorage.
 - src/lib/audio.ts: the only module that plays sound.
 - src/i18n/en.ts: all UI text. km.ts comes later with the Khmer toggle.
-- src/components/: LetterGrid, TraceCanvas, ScoreOverlay, BadgeShelf.
+- src/components/: LetterGrid, FormToggle, TraceCanvas, ScoreOverlay, BadgeShelf.
 - public/fonts/: self-hosted Kantumruy Pro (woff2).
 - public/audio/sfx/: sound effects. public/audio/letters/<order>-<name>.mp3: letter names (Phase 4).
 - .github/: deploy workflow and dependabot.yml.
@@ -37,6 +39,7 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 ## Khmer text rules
 - Render Khmer only with the self-hosted Kantumruy Pro, never a system fallback. Await document.fonts.load() before drawing a guide letter or a scoring mask.
 - Show the letter itself everywhere. Names repeat (two "tha", two "tho").
+- A subscript on its own sits under a dotted circle (◌្ក), as dictionaries show it. Build it, and stacks like ក្ក, with `glyph()` in src/lib/forms.ts. ឡ has no subscript form: the CSV's subscript column says no.
 - Never hard-code romanizations outside letters.csv.
 - Never put user-facing text inline in components. It goes in src/i18n/en.ts, so adding the Khmer toggle needs no refactor.
 

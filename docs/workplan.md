@@ -19,7 +19,8 @@ The first version, the MVP, is one complete loop: pick a letter, trace it, get a
 
 | Feature | MVP | Later |
 | --- | --- | --- |
-| Grid of all 33 consonants, grouped by first and second series | Yes |  |
+| Grid with the numerals ០ to ៩ first, then all 33 consonants in one block | Yes |  |
+| A Letter / Subscript / Both toggle on the grid: each consonant's subscript (coeng) form, alone or stacked like ក្ក | Yes |  |
 | Trace screen with a faint letter guide, plus undo and clear | Yes |  |
 | Score from 0 to 100 and 1 to 3 stars, with missed areas highlighted | Yes |  |
 | Sound effects for strokes, stars and badges | Yes |  |
@@ -27,8 +28,7 @@ The first version, the MVP, is one complete loop: pick a letter, trace it, get a
 | Progress saved on the device, with a badge per series and for all 33 | Yes |  |
 | Works with touch (iOS Safari, Android Chrome) and mouse | Yes |  |
 | Stroke-order animation and a "start here" dot |  | Needs hand-made stroke data |
-| Subscript forms (coeng), dependent and independent vowels |  | Yes |
-| Khmer numerals ០ to ៩ |  | Yes |
+| Dependent and independent vowels |  | Yes |
 | Listening quiz: hear a sound, pick the letter |  | Yes |
 | Khmer-language interface toggle |  | Yes |
 | Works offline as an installable app (PWA) |  | Yes |
@@ -178,13 +178,17 @@ Convert src/data/letters.csv into a typed src/data/letters.ts (order, char, unic
 Done when all 33 letters look right in the grid on iOS Safari and Android Chrome, and the test passes.
 
 - [x] Built and checked locally: letters.ts generated from the CSV, the grid, and typecheck, lint, unit tests and e2e passing. Security checks logged (Oct 30, 2026)
-- [ ] All 33 letters checked in the grid on iOS Safari and Android Chrome
+- [x] Live at https://lmnx.github.io/trace-khmer-alphabets/ from 53a63d4, live-site checks logged (Oct 30, 2026)
+- [x] Revised at Kim's request (Oct 30, 2026): the numerals ០ to ៩ come first, labelled 0 to 9, then all 33 letters in one block, because the series split doesn't help with writing. A Letter / Subscript / Both toggle shows each letter, its subscript under a dotted circle (◌្ក), or both stacked (ក្ក). ឡ has no subscript, so it is greyed out in those views. Built and checked locally
+- [ ] Numbers, letters, subscripts and stacks checked in the grid on iOS Safari and Android Chrome
 
 ### Phase 2: Tracing canvas
 
 ```
 Build TraceCanvas for the #/trace/:order page. Draw the letter very faint (about 15% opacity) in the Khmer font, centred and filling about 80% of a square canvas that fits the screen width. Capture strokes with Pointer Events and render them with perfect-freehand. Set touch-action: none on the canvas so the page does not scroll while drawing. Handle devicePixelRatio so lines are sharp. Add Undo (last stroke), Clear, and Done buttons below the canvas, plus Previous and Next letter arrows. Keep the strokes as arrays of points in state.
 ```
+
+Since Oct 30, 2026 the trace page also opens a number (#/trace/number/:digit) and a letter's subscript or stacked form (#/trace/:order/subscript or /both), so TraceCanvas draws whichever text `glyph()` in src/lib/forms.ts gives, and Previous and Next stay within the same set.
 
 Done when drawing on a phone is smooth, the page never scrolls mid-stroke, and undo works.
 
@@ -241,7 +245,8 @@ The biggest risk is not the code. It is letting the app teach a letter shape or 
 | Romanization | Names in the CSV follow no single system | Reviewer corrects the CSV; the app always shows the letter too |
 | Scoring feels unfair | Thin strokes or small letter parts are hard to hit | Tune the tolerance and star levels in the config object |
 | Audio on iPhone | Sound does not play until a tap | Play only from a button tap |
-| Scope creep | Vowels and subscripts get added before the core loop works | Ship the MVP first |
+| Scope creep | Vowels get added before the core loop works (numerals and subscripts joined the MVP on purpose on Oct 30) | Ship the MVP first |
+| Subscripts | Subscripts are small, some look alike (្ដ and ្ត) and some sit beside the letter (្រ, ្ស), so they are hard to trace and to score fairly | The reviewer checks every subscript; tune scoring for small shapes in Phase 3 |
 | Hosting limits | GitHub Pages can't send security headers, so nothing stops other sites from framing the app | CSP meta tag now; Cloudflare's proxy adds the headers once there's a custom domain |
 | AI voice quality | The neural voice says a letter name wrongly or unnaturally | The reviewer approves samples first; otherwise record a native speaker |
 
@@ -253,6 +258,8 @@ Decisions to confirm:
 - [x] Which Khmer font to use: Kantumruy Pro (Oct 30, 2026)
 - [x] Which free host to deploy to: GitHub Pages, deployed by GitHub Actions (Oct 30, 2026)
 - [x] Audio: sound effects for the MVP, AI letter voices tested in Phase 4 (Oct 30, 2026)
+- [x] Grid: numbers first, then all 33 letters in one block, with a Letter / Subscript / Both toggle; number tiles show the digit 0 to 9 (Oct 30, 2026)
+- [ ] Badges for Phase 4: the plan awards First series and Second series badges, but the grid no longer shows the series. Keep them, or award badges per set instead (Numbers, Letters, Subscripts, and an Apsara badge for everything)
 - [ ] Custom domain. Shortlist, all unregistered on Oct 30, 2026: aksar.app (អក្សរ, "letters"), tracekhmer.com or .app, kakhako.app ("kâ khâ kô", the Khmer ABC). Backups: rienaksar.com, sorsei.app, aksarkids.app. Buy from an at-cost registrar such as Cloudflare Registrar or Porkbun, and compare renewal prices. Once bought: add public/CNAME, verify the domain in GitHub settings so nobody else can claim it, turn on Enforce HTTPS, and consider Cloudflare's proxy to add the headers GitHub Pages can't send.
 
 ## Sources

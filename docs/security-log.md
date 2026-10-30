@@ -2,6 +2,36 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-30 · Phase 1 revision (numbers, one letter block, subscript toggle)
+
+Run before committing and pushing. Checks 4 and 5 ran against the local production build, and need repeating on the live site after the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | `npm audit --omit=dev` | 0 vulnerabilities. Full `npm audit`, dev included: 0. No dependency changes. |
+| 2 | `npm outdated`, Dependabot PRs | `typescript` 7.0.2 is still held (typescript-eslint needs below 6.1). `eslint` 10.14.0 (dev only) was published today, so it waits for Dependabot's 7-day cooldown, around Nov 6. No open PRs. |
+| 3 | `/security-review` | No findings. Nothing was committed yet, so the review covered the working tree. |
+| 4 | CSP meta tag, no violations | e2e passed on Android Chrome and iPhone Safari emulation with no CSP violations or console errors, including switching the toggle and opening number, subscript and stacked trace pages. The CSP and referrer tags are unchanged. |
+| 5 | Every request to the site's own origin | e2e passed on both browsers. The only URLs in the bundle are still XML namespace strings and React/Tailwind comment links. |
+
+Review notes:
+- New routes (#/subscript, #/both, #/trace/:order/subscript or /both, #/trace/number/:digit) are matched whole. Forms come only from a fixed list, and ឡ's subscript routes fall back home because the letter has no subscript. Anything else goes home.
+- The toggle calls `location.replace` with one of three fixed hashes, so it never navigates anywhere else and adds no history entries.
+- The CSV's new `subscript` column accepts only `yes` or `no` and becomes a boolean in letters.ts.
+
+## 2026-10-30 · Phase 1 live
+
+Deployed from commit 53a63d4 (Kim pushed it) to https://lmnx.github.io/trace-khmer-alphabets/. Checks 1 to 3 are in the entry below, run before the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 4 | CSP meta tag, no violations, HTTPS | The live `index.html`, JS and CSS are byte-for-byte identical to a local build, so the CSP and referrer tags come first in `<head>`. The browser pane's console was empty at 375 px, on the grid and after tapping a tile to `#/trace/28`. `http://` gets a 301 redirect to `https://`. |
+| 5 | Every request to the site's own origin | The page, one JS file, one CSS file and two fonts, all from `lmnx.github.io/trace-khmer-alphabets/`. No other origins. |
+
+- CI run 41076050209: "Check and build" (Playwright: 12 passed) and "Deploy to GitHub Pages" both succeeded. The only other annotations are the known `ubuntu-latest` → Ubuntu 26 notices.
+- Live grid at 375 px: 33 tiles (15 first series, 18 second series), every letter shown in Kantumruy Pro, no sideways scroll.
+- Phone check on iOS Safari and Android Chrome: waiting on Kim.
+
 ## 2026-10-30 · Phase 1 (Letter data and grid)
 
 Run before pushing. Checks 4 and 5 ran against the local production build, and need repeating on the live site after the push.
