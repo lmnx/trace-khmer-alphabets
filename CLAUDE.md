@@ -4,7 +4,7 @@ A phone-first web app where learners trace the Khmer numerals and the 33 consona
 
 ## Status
 - Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone.
-- Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is checked locally but not yet committed. Still to do: Kim pushes, then checks the grid on iOS Safari and Android Chrome. Then Phase 2 (Tracing canvas).
+- Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is live from 0aabbd4, with the live-site checks logged. Still to do: Kim checks all three views on iOS Safari and Android Chrome. Then Phase 2 (Tracing canvas).
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
 

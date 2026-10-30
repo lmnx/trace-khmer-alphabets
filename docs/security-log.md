@@ -2,6 +2,20 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-30 · Phase 1 revision live
+
+Deployed from commit 0aabbd4 (Kim pushed it). Checks 1 to 3 are in the entry below, run before the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 4 | CSP meta tag, no violations, HTTPS | The live `index.html`, JS and CSS are byte-for-byte identical to a local build of 0aabbd4, so the CSP and referrer tags are in place. The browser pane's console was empty at 375 px through the Letter, Subscript and Both views and a stacked tile's trace page. `http://` gets a 301 redirect to `https://`. |
+| 5 | Every request to the site's own origin | The page, one JS file, one CSS file and two fonts, all from `lmnx.github.io/trace-khmer-alphabets/`. No other origins. |
+
+- CI run 41079469572: "Check and build" (Playwright: 14 passed) and "Deploy to GitHub Pages" both succeeded. The only other annotations are the known `ubuntu-latest` → Ubuntu 26 notices.
+- Live grid at 375 px: 10 numbers and 33 letters, with no sideways scroll. In the Subscript and Both views, 32 letters are links and ឡ is greyed out.
+- Not security, noted for later: Tailwind also scans CLAUDE.md and docs/ for class names, so words there ("fixed", "relative", "static", "contents") add four unused CSS rules, and a docs-only commit changes the CSS file. Limiting Tailwind's source to src/ fixes it.
+- Phone check on iOS Safari and Android Chrome: waiting on Kim.
+
 ## 2026-10-30 · Phase 1 revision (numbers, one letter block, subscript toggle)
 
 Run before committing and pushing. Checks 4 and 5 ran against the local production build, and need repeating on the live site after the push.

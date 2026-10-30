@@ -179,7 +179,7 @@ Done when all 33 letters look right in the grid on iOS Safari and Android Chrome
 
 - [x] Built and checked locally: letters.ts generated from the CSV, the grid, and typecheck, lint, unit tests and e2e passing. Security checks logged (Oct 30, 2026)
 - [x] Live at https://lmnx.github.io/trace-khmer-alphabets/ from 53a63d4, live-site checks logged (Oct 30, 2026)
-- [x] Revised at Kim's request (Oct 30, 2026): the numerals ០ to ៩ come first, labelled 0 to 9, then all 33 letters in one block, because the series split doesn't help with writing. A Letter / Subscript / Both toggle shows each letter, its subscript under a dotted circle (◌្ក), or both stacked (ក្ក). ឡ has no subscript, so it is greyed out in those views. Built and checked locally
+- [x] Revised at Kim's request (Oct 30, 2026): the numerals ០ to ៩ come first, labelled 0 to 9, then all 33 letters in one block, because the series split doesn't help with writing. A Letter / Subscript / Both toggle shows each letter, its subscript under a dotted circle (◌្ក), or both stacked (ក្ក). ឡ has no subscript, so it is greyed out in those views. Live from 0aabbd4, live-site checks logged
 - [ ] Numbers, letters, subscripts and stacks checked in the grid on iOS Safari and Android Chrome
 
 ### Phase 2: Tracing canvas
