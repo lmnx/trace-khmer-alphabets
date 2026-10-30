@@ -33,28 +33,34 @@ describe('letters.ts', () => {
     }
     expect(new Set(letters.map((letter) => letter.char)).size).toBe(letters.length);
   });
+
+  it('gives every letter a subscript form except ឡ', () => {
+    expect(letters.filter((letter) => !letter.subscript).map((letter) => letter.char)).toEqual(['ឡ']);
+  });
 });
 
 describe('parseLettersCsv', () => {
-  const header = 'order,char,unicode,name,series';
+  const header = 'order,char,unicode,name,series,subscript';
 
   it('accepts Windows line endings and a byte-order mark', () => {
-    expect(parseLettersCsv(`\uFEFF${header}\r\n1,ក,U+1780,kâ,1\r\n`)).toEqual([
-      { order: 1, char: 'ក', unicode: 'U+1780', name: 'kâ', series: 1 },
+    expect(parseLettersCsv(`\uFEFF${header}\r\n1,ក,U+1780,kâ,1,yes\r\n`)).toEqual([
+      { order: 1, char: 'ក', unicode: 'U+1780', name: 'kâ', series: 1, subscript: true },
     ]);
   });
 
   it('rejects rows that would put wrong data in the app', () => {
     const bad: Record<string, string> = {
-      'a different header': 'order,char,code,name,series\n1,ក,U+1780,ka,1',
-      'a code point that does not match the char': `${header}\n1,ក,U+1781,ka,1`,
-      'a gap in the order': `${header}\n2,ក,U+1780,ka,1`,
-      'a char given twice': `${header}\n1,ក,U+1780,ka,1\n2,ក,U+1780,ka,1`,
-      'two chars in one cell': `${header}\n1,កខ,U+1780,ka,1`,
-      'a third series': `${header}\n1,ក,U+1780,ka,3`,
-      'an extra field': `${header}\n1,ក,U+1780,ka,1,x`,
-      'a name that is not romanized': `${header}\n1,ក,U+1780,<b>,1`,
-      'an empty name': `${header}\n1,ក,U+1780,,1`,
+      'a different header': 'order,char,code,name,series,subscript\n1,ក,U+1780,ka,1,yes',
+      'a code point that does not match the char': `${header}\n1,ក,U+1781,ka,1,yes`,
+      'a gap in the order': `${header}\n2,ក,U+1780,ka,1,yes`,
+      'a char given twice': `${header}\n1,ក,U+1780,ka,1,yes\n2,ក,U+1780,ka,1,yes`,
+      'two chars in one cell': `${header}\n1,កខ,U+1780,ka,1,yes`,
+      'a third series': `${header}\n1,ក,U+1780,ka,3,yes`,
+      'a subscript that is not yes or no': `${header}\n1,ក,U+1780,ka,1,true`,
+      'a missing field': `${header}\n1,ក,U+1780,ka,1`,
+      'an extra field': `${header}\n1,ក,U+1780,ka,1,yes,x`,
+      'a name that is not romanized': `${header}\n1,ក,U+1780,<b>,1,yes`,
+      'an empty name': `${header}\n1,ក,U+1780,,1,yes`,
     };
     for (const [problem, csv] of Object.entries(bad)) {
       expect(() => parseLettersCsv(csv), problem).toThrow(/^letters\.csv line \d+:/);

@@ -6,8 +6,8 @@ export function App() {
   const route = useRoute();
   switch (route.name) {
     case 'trace':
-      return <Trace order={route.order} />;
+      return <Trace target={route.target} />;
     case 'home':
-      return <Home />;
+      return <Home form={route.form} />;
   }
 }

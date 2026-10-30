@@ -5,15 +5,23 @@ export const en = {
     allLetters: 'All letters',
   },
   home: {
-    intro: 'Tap a letter to trace it.',
+    intro: 'Tap a number or letter to trace it.',
   },
   grid: {
-    series: {
-      1: 'First series',
-      2: 'Second series',
+    numbers: 'Numbers',
+    letters: 'Letters',
+    formLegend: 'Show letters as',
+    forms: {
+      letter: 'Letter',
+      subscript: 'Subscript',
+      both: 'Both',
     },
+    noSubscript: 'none',
   },
   trace: {
-    heading: (order: number) => `Letter ${order}`,
+    letter: (order: number) => `Letter ${order}`,
+    subscript: (order: number) => `Subscript of letter ${order}`,
+    both: (order: number) => `Letter ${order} with its subscript`,
+    number: (digit: number) => `Number ${digit}`,
   },
 } as const;

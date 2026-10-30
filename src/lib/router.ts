@@ -1,25 +1,60 @@
 import { useSyncExternalStore } from 'react';
 import { letters } from '../data/letters';
+import type { Form } from './forms';
 
-// Hash routes (#/trace/:order), because GitHub Pages can't send every path to
-// index.html. The hash is user input, so only exact known shapes are accepted.
+// Hash routes, because GitHub Pages can't send every path to index.html.
+// The hash is user input, so only exact known shapes are accepted:
+//   #/  #/subscript  #/both                      home, showing that form
+//   #/trace/1  #/trace/1/subscript  #/trace/1/both  a letter in a form
+//   #/trace/number/0 to #/trace/number/9          a numeral
 
-export type Route = { name: 'home' } | { name: 'trace'; order: number };
+export type TraceTarget = { kind: 'letter'; order: number; form: Form } | { kind: 'number'; digit: number };
+
+export type Route = { name: 'home'; form: Form } | { name: 'trace'; target: TraceTarget };
+
+const HOME: Route = { name: 'home', form: 'letter' };
+
+function toForm(suffix: string | undefined): Form {
+  return suffix === 'subscript' || suffix === 'both' ? suffix : 'letter';
+}
 
 export function parseHash(hash: string): Route {
-  const trace = /^#\/trace\/([1-9]\d?)$/.exec(hash);
-  if (trace) {
-    const order = Number(trace[1]);
-    if (order <= letters.length) return { name: 'trace', order };
+  const home = /^#\/(subscript|both)$/.exec(hash);
+  if (home) return { name: 'home', form: toForm(home[1]) };
+
+  const letter = /^#\/trace\/([1-9]\d?)(?:\/(subscript|both))?$/.exec(hash);
+  if (letter) {
+    const order = Number(letter[1]);
+    const form = toForm(letter[2]);
+    const known = letters[order - 1];
+    // ឡ has no subscript, so it has no subscript or both page.
+    if (known && (form === 'letter' || known.subscript)) {
+      return { name: 'trace', target: { kind: 'letter', order, form } };
+    }
   }
-  return { name: 'home' };
+
+  const number = /^#\/trace\/number\/(\d)$/.exec(hash);
+  if (number) return { name: 'trace', target: { kind: 'number', digit: Number(number[1]) } };
+
+  return HOME;
 }
 
-export function traceHref(order: number): string {
-  return `#/trace/${order}`;
+export function homeHref(form: Form = 'letter'): string {
+  return form === 'letter' ? '#/' : `#/${form}`;
 }
 
-export const homeHref = '#/';
+export function traceHref(order: number, form: Form = 'letter'): string {
+  return form === 'letter' ? `#/trace/${order}` : `#/trace/${order}/${form}`;
+}
+
+export function numberHref(digit: number): string {
+  return `#/trace/number/${digit}`;
+}
+
+// Switches the home page's form without adding a history entry per tap.
+export function showHome(form: Form): void {
+  window.location.replace(homeHref(form));
+}
 
 function subscribe(onChange: () => void): () => void {
   window.addEventListener('hashchange', onChange);

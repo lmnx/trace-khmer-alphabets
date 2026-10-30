@@ -8,9 +8,10 @@ export interface LetterRow {
   unicode: string;
   name: string;
   series: 1 | 2;
+  subscript: boolean;
 }
 
-const HEADER = 'order,char,unicode,name,series';
+const HEADER = 'order,char,unicode,name,series,subscript';
 // One romanization: Latin letters, with diacritics, apostrophes or hyphens.
 const NAME = /^\p{Script=Latin}[\p{Script=Latin}\p{M}'-]*$/u;
 const UNICODE = /^U\+[0-9A-F]{4,5}$/;
@@ -32,8 +33,8 @@ export function parseLettersCsv(csv: string): LetterRow[] {
     };
 
     const fields = line.split(',');
-    if (fields.length !== 5) fail(`expected 5 fields, found ${fields.length}`);
-    const [order, char, unicode, name, series] = fields;
+    if (fields.length !== 6) fail(`expected 6 fields, found ${fields.length}`);
+    const [order, char, unicode, name, series, subscript] = fields;
 
     if (order !== String(index + 1)) fail(`expected order ${index + 1}, found "${order}"`);
     if ([...char].length !== 1) fail(`expected one character, found "${char}"`);
@@ -44,17 +45,19 @@ export function parseLettersCsv(csv: string): LetterRow[] {
     chars.add(char);
     if (!NAME.test(name)) fail(`expected a romanized name, found "${name}"`);
     if (series !== '1' && series !== '2') fail(`expected series 1 or 2, found "${series}"`);
+    // Whether the letter has a subscript (coeng) form. ឡ has none.
+    if (subscript !== 'yes' && subscript !== 'no') fail(`expected subscript yes or no, found "${subscript}"`);
 
-    return { order: index + 1, char, unicode, name, series: series === '1' ? 1 : 2 };
+    return { order: index + 1, char, unicode, name, series: series === '1' ? 1 : 2, subscript: subscript === 'yes' };
   });
 }
 
 export function renderLettersModule(rows: readonly LetterRow[]): string {
   // JSON.stringify quotes every string, so no CSV value can break out of it.
   const entries = rows.map(
-    ({ order, char, unicode, name, series }) =>
+    ({ order, char, unicode, name, series, subscript }) =>
       `  { order: ${order}, char: ${JSON.stringify(char)}, unicode: ${JSON.stringify(unicode)}, ` +
-      `name: ${JSON.stringify(name)}, series: ${series} },`,
+      `name: ${JSON.stringify(name)}, series: ${series}, subscript: ${subscript} },`,
   );
   return [
     '// Generated from src/data/letters.csv by scripts/generate-letters.ts.',
@@ -68,6 +71,7 @@ export function renderLettersModule(rows: readonly LetterRow[]): string {
     '  readonly unicode: string;',
     '  readonly name: string;',
     '  readonly series: Series;',
+    '  readonly subscript: boolean;',
     '}',
     '',
     'export const letters: readonly Letter[] = [',
