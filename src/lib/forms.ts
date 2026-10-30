@@ -9,7 +9,7 @@ export const FORMS: readonly Form[] = ['letter', 'subscript', 'both'];
 const COENG = String.fromCodePoint(0x17d2);
 // A subscript has no base of its own, so it sits under a dotted circle, the
 // way Khmer dictionaries and keyboards show it.
-const DOTTED_CIRCLE = String.fromCodePoint(0x25cc);
+export const DOTTED_CIRCLE = String.fromCodePoint(0x25cc);
 
 // The text for a letter in a form. A letter with no subscript (ឡ) shows alone
 // in Both, and has nothing (null) to show in Subscript.

@@ -1,21 +1,29 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { en } from '../i18n/en';
 import { useKhmerFontReady } from '../lib/fonts';
-import { drawGlyph, layoutGlyph, templateStrokeWidth } from '../lib/guide';
+import { drawTraceable, layoutGlyph, templateStrokeWidth } from '../lib/guide';
 import { INK_SPACE, strokePath, type Point, type Stroke } from '../lib/ink';
+import { resultImage, traceMasks } from '../lib/masks';
+import { scoreTrace, type TraceScore } from '../lib/scoring';
+import { COVERED_COLOR, MISSED_COLOR, ScoreOverlay } from './ScoreOverlay';
 
 const GUIDE_COLOR = '#1c1917'; // stone-900
 const GUIDE_ALPHA = 0.15;
 const INK_COLOR = '#0369a1'; // sky-700
+// After Done, the letter shows in green and red, with the ink faintly over it.
+const RESULT_ALPHA = 0.85;
+const INK_OVER_RESULT_ALPHA = 0.3;
 
 // A square canvas with the character drawn faintly, for tracing with a finger,
 // pen or mouse. Strokes are kept as arrays of points; Undo drops the last one.
+// Done scores the strokes and shows the result until Try again.
 export function TraceCanvas({ text }: { text: string }) {
   const fontReady = useKhmerFontReady();
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState(0);
   const [strokes, setStrokes] = useState<readonly Stroke[]>([]);
+  const [result, setResult] = useState<TraceScore | null>(null);
   // The stroke in progress lives in a ref, so each pointer move repaints the
   // canvas without re-rendering React.
   const drawing = useRef<{ pointerId: number; points: Point[] } | null>(null);
@@ -40,18 +48,31 @@ export function TraceCanvas({ text }: { text: string }) {
     // Nothing is drawn, and no stroke can start, until the font has loaded.
     if (!fontReady) return;
     const layout = layoutGlyph(ctx, text, pixels);
-    ctx.globalAlpha = GUIDE_ALPHA;
     ctx.fillStyle = GUIDE_COLOR;
-    drawGlyph(ctx, text, layout);
+    if (result) {
+      ctx.globalAlpha = RESULT_ALPHA;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(resultImage(result.covered, result.missed, COVERED_COLOR, MISSED_COLOR), 0, 0, pixels, pixels);
+    } else {
+      ctx.globalAlpha = GUIDE_ALPHA;
+      drawTraceable(ctx, text, layout);
+    }
 
-    // The ink is as wide as the guide's own strokes.
+    // The ink is as wide as the guide's own strokes. Over the result it is
+    // drawn on its own layer and faded as a whole, so overlaps don't darken.
     const width = templateStrokeWidth(layout, pixels);
+    const ink = result ? inkLayer(pixels) : ctx;
+    ink.fillStyle = INK_COLOR;
+    ink.setTransform(pixels / INK_SPACE, 0, 0, pixels / INK_SPACE, 0, 0);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = INK_COLOR;
-    ctx.setTransform(pixels / INK_SPACE, 0, 0, pixels / INK_SPACE, 0, 0);
-    for (const stroke of strokes) ctx.fill(strokePath(stroke, width, true));
-    if (drawing.current) ctx.fill(strokePath(drawing.current.points, width, false));
-  }, [fontReady, strokes, text]);
+    for (const stroke of strokes) ink.fill(strokePath(stroke, width, true));
+    if (drawing.current) ink.fill(strokePath(drawing.current.points, width, false));
+    if (ink !== ctx) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = INK_OVER_RESULT_ALPHA;
+      ctx.drawImage(ink.canvas, 0, 0);
+    }
+  }, [fontReady, result, strokes, text]);
 
   useEffect(() => {
     // A frame queued by the last pointer move still holds the old strokes, so
@@ -79,9 +100,9 @@ export function TraceCanvas({ text }: { text: string }) {
   }
 
   function onPointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
-    // One finger at a time, only the main mouse button, and only once the
-    // guide is showing.
-    if (!fontReady || drawing.current || !event.isPrimary || event.button !== 0) return;
+    // One finger at a time, only the main mouse button, only once the guide
+    // is showing, and not while the result is up.
+    if (!fontReady || result || drawing.current || !event.isPrimary || event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     drawing.current = { pointerId: event.pointerId, points: [pointOn(event.currentTarget, event)] };
     repaintSoon();
@@ -106,6 +127,16 @@ export function TraceCanvas({ text }: { text: string }) {
     setStrokes((previous) => [...previous, stroke.points]);
   }
 
+  function score() {
+    const { target, ink, paths, strokeWidth } = traceMasks(text, strokes);
+    setResult(scoreTrace(target, ink, paths, strokeWidth));
+  }
+
+  function tryAgain() {
+    setStrokes([]);
+    setResult(null);
+  }
+
   const empty = strokes.length === 0;
   return (
     <div className="flex w-full flex-col items-center gap-3">
@@ -127,20 +158,32 @@ export function TraceCanvas({ text }: { text: string }) {
           onContextMenu={(event) => event.preventDefault()}
         />
       </div>
-      <div className="grid w-[min(100%,24rem)] grid-cols-3 gap-2">
-        <button type="button" className={BUTTON} disabled={empty} onClick={() => setStrokes(strokes.slice(0, -1))}>
-          {en.trace.undo}
-        </button>
-        <button type="button" className={BUTTON} disabled={empty} onClick={() => setStrokes([])}>
-          {en.trace.clear}
-        </button>
-        {/* Phase 3 scores the trace when Done is tapped. */}
-        <button type="button" className={DONE_BUTTON} disabled>
-          {en.trace.done}
-        </button>
-      </div>
+      {result ? (
+        <ScoreOverlay result={result} onTryAgain={tryAgain} />
+      ) : (
+        <div className="grid w-[min(100%,24rem)] grid-cols-3 gap-2">
+          <button type="button" className={BUTTON} disabled={empty} onClick={() => setStrokes(strokes.slice(0, -1))}>
+            {en.trace.undo}
+          </button>
+          <button type="button" className={BUTTON} disabled={empty} onClick={() => setStrokes([])}>
+            {en.trace.clear}
+          </button>
+          <button type="button" className={DONE_BUTTON} disabled={empty} onClick={score}>
+            {en.trace.done}
+          </button>
+        </div>
+      )}
     </div>
   );
+}
+
+function inkLayer(pixels: number): CanvasRenderingContext2D {
+  const canvas = document.createElement('canvas');
+  canvas.width = pixels;
+  canvas.height = pixels;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('No 2D canvas');
+  return ctx;
 }
 
 function pointOn(canvas: HTMLCanvasElement, event: { clientX: number; clientY: number }): Point {

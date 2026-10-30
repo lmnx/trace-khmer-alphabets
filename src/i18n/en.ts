@@ -30,4 +30,12 @@ export const en = {
     clear: 'Clear',
     done: 'Done',
   },
+  score: {
+    stars: (count: number) => `${count} of 3 stars`,
+    // Indexed by the number of stars.
+    praise: ['Keep practising', 'Good try', 'Great', 'Excellent'],
+    covered: 'Traced',
+    missed: 'Missed',
+    tryAgain: 'Try again',
+  },
 } as const;

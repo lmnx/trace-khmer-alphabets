@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fitGlyph, STROKE_EM, templateStrokeWidth } from '../src/lib/guide';
+import { fitGlyph, STROKE_EM, SUBSCRIPT_STROKE_EM, templateStrokeWidth } from '../src/lib/guide';
 import { numberHref, traceHref } from '../src/lib/router';
 import { neighbours, targetText } from '../src/lib/targets';
 
@@ -25,10 +25,12 @@ describe('fitGlyph', () => {
 
 describe('templateStrokeWidth', () => {
   it("is the font's pen width at the guide's size, as a share of the square", () => {
-    expect(STROKE_EM).toBe(0.07);
-    expect(templateStrokeWidth({ fontSize: 1000, x: 0, y: 0 }, 1000)).toBeCloseTo(0.07);
+    expect([STROKE_EM, SUBSCRIPT_STROKE_EM]).toEqual([0.07, 0.06]);
+    expect(templateStrokeWidth({ fontSize: 1000, x: 0, y: 0, strokeEm: STROKE_EM }, 1000)).toBeCloseTo(0.07);
     // A stack drawn smaller to fit gets thinner ink.
-    expect(templateStrokeWidth({ fontSize: 500, x: 0, y: 0 }, 1000)).toBeCloseTo(0.035);
+    expect(templateStrokeWidth({ fontSize: 500, x: 0, y: 0, strokeEm: STROKE_EM }, 1000)).toBeCloseTo(0.035);
+    // A subscript's own strokes are thinner.
+    expect(templateStrokeWidth({ fontSize: 1000, x: 0, y: 0, strokeEm: SUBSCRIPT_STROKE_EM }, 1000)).toBeCloseTo(0.06);
   });
 });
 

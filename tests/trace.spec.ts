@@ -38,9 +38,15 @@ async function alpha(page: Page, at?: Share): Promise<number> {
   }, at);
 }
 
+// Opens a trace page and waits until the guide is drawn: by then the font has
+// loaded and the canvas has been sized, so strokes count and pixels can be read.
+async function openTrace(page: Page, href: string) {
+  await page.goto(`./${href}`);
+  await expect.poll(() => alpha(page)).toBeGreaterThan(0);
+}
+
 test('the trace page shows the character faintly on a sharp, square canvas that fits the screen', async ({ page }) => {
-  await page.goto(`./${traceHref(1)}`);
-  await expect(canvas(page)).toBeVisible();
+  await openTrace(page, traceHref(1));
   const info = await canvas(page).evaluate((element) => {
     const el = element as HTMLCanvasElement;
     const box = el.getBoundingClientRect();
@@ -58,18 +64,16 @@ test('the trace page shows the character faintly on a sharp, square canvas that 
   expect(info.backing[0]).toBe(Math.round(info.css[0] * info.dpr));
   expect(info.backing[1]).toBe(info.backing[0]);
 
-  // The guide appears once the font has loaded, and stays faint.
-  await expect.poll(() => alpha(page)).toBeGreaterThan(0);
+  // The guide is faint.
   expect(await alpha(page)).toBeLessThanOrEqual(GUIDE_ALPHA_MAX);
 });
 
 test('drawing adds strokes, Undo removes the last one and Clear removes them all', async ({ page }) => {
-  await page.goto(`./${traceHref(1)}`);
+  await openTrace(page, traceHref(1));
   const undo = page.getByRole('button', { name: en.trace.undo });
   const clear = page.getByRole('button', { name: en.trace.clear });
   await expect(undo).toBeDisabled();
   await expect(clear).toBeDisabled();
-  // Phase 3 scores the trace when Done is tapped.
   await expect(page.getByRole('button', { name: en.trace.done })).toBeDisabled();
 
   await drawLine(page, [0.2, 0.2], [0.8, 0.2]);
@@ -110,8 +114,7 @@ async function runAcross(page: Page, y: number, from: number, to: number, min: n
 }
 
 test("the ink is as wide as the letter's own strokes", async ({ page }) => {
-  await page.goto(`./${traceHref(1)}`);
-  await expect.poll(() => alpha(page)).toBeGreaterThan(0);
+  await openTrace(page, traceHref(1));
   // ក's left leg, in the faint guide.
   const guide = await runAcross(page, 0.85, 0.15, 0.45, 19);
   // A line down the empty middle of ក, under its arch.
@@ -125,8 +128,7 @@ test('a finger drag on the canvas draws instead of scrolling the page', async ({
   test.skip(browserName !== 'chromium', 'Touch drags are sent through the Chrome DevTools Protocol');
   // Short enough that the page can scroll.
   await page.setViewportSize({ width: 412, height: 400 });
-  await page.goto(`./${traceHref(1)}`);
-  await expect(canvas(page)).toBeVisible();
+  await openTrace(page, traceHref(1));
   expect(await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)).toBe(true);
 
   const cdp = await page.context().newCDPSession(page);
@@ -154,7 +156,7 @@ test('a finger drag on the canvas draws instead of scrolling the page', async ({
 });
 
 test('the arrows step through the same set, and each character starts blank', async ({ page }) => {
-  await page.goto(`./${traceHref(1)}`);
+  await openTrace(page, traceHref(1));
   await expect(page.getByRole('link', { name: en.trace.previous })).toHaveCount(0);
   await drawLine(page, [0.2, 0.2], [0.8, 0.2]);
   await expect(canvas(page)).toHaveAttribute('data-strokes', '1');
@@ -164,12 +166,184 @@ test('the arrows step through the same set, and each character starts blank', as
   await expect(canvas(page)).toHaveAttribute('data-strokes', '0');
 
   // Subscript skips ឡ (letter 32), which has no subscript.
-  await page.goto(`./${traceHref(31, 'subscript')}`);
+  await openTrace(page, traceHref(31, 'subscript'));
   await page.getByRole('link', { name: en.trace.next }).tap();
   expect(hash(page)).toBe(traceHref(33, 'subscript'));
   await expect(page.getByRole('link', { name: en.trace.next })).toHaveCount(0);
 
-  await page.goto(`./${numberHref(9)}`);
+  await openTrace(page, numberHref(9));
   await expect(page.getByRole('link', { name: en.trace.next })).toHaveCount(0);
   await expect(page.getByRole('link', { name: en.trace.previous })).toHaveAttribute('href', numberHref(8));
+});
+
+// Runs of guide pixels along a row or a column of the canvas, as [start, end]
+// shares of its size. Read before any ink is drawn.
+async function guideRuns(page: Page, along: 'row' | 'column', at: number): Promise<[number, number][]> {
+  return canvas(page).evaluate(
+    (element, [along, at]) => {
+      const el = element as HTMLCanvasElement;
+      const ctx = el.getContext('2d');
+      if (!ctx) return [];
+      const size = el.width;
+      const line = Math.floor(Number(at) * size);
+      const data = along === 'row' ? ctx.getImageData(0, line, size, 1).data : ctx.getImageData(line, 0, 1, size).data;
+      const runs: [number, number][] = [];
+      let start = -1;
+      for (let i = 0; i <= size; i++) {
+        const on = i < size && data[i * 4 + 3] >= 19;
+        if (on && start < 0) start = i;
+        if (!on && start >= 0) {
+          runs.push([start / size, i / size]);
+          start = -1;
+        }
+      }
+      return runs;
+    },
+    [along, at] as const,
+  );
+}
+
+const middle = ([start, end]: [number, number]) => (start + end) / 2;
+
+// Traces ក along the middle of its strokes, worked out from the guide: the
+// bar as one stroke, then up the left leg, over the arch and down the right.
+async function traceKa(page: Page) {
+  const [leftLeg, rightLeg] = await guideRuns(page, 'row', 0.8);
+  const [bar, archTop] = await guideRuns(page, 'column', 0.5);
+  const half = (bar[1] - bar[0]) / 2;
+  const [barRow] = await guideRuns(page, 'row', middle(bar));
+  const leftColumn = await guideRuns(page, 'column', middle(leftLeg));
+  const bottom = leftColumn[leftColumn.length - 1][1] - half;
+  const x0 = middle(leftLeg);
+  const x1 = middle(rightLeg);
+  const radius = (x1 - x0) / 2;
+  const centre: Share = [(x0 + x1) / 2, middle(archTop) + radius];
+
+  await drawPath(page, [
+    [barRow[0] + half, middle(bar)],
+    [barRow[1] - half, middle(bar)],
+  ]);
+  const arch = Array.from({ length: 17 }, (_, i): Share => {
+    const angle = Math.PI - (Math.PI * i) / 16;
+    return [centre[0] + radius * Math.cos(angle), centre[1] - radius * Math.sin(angle)];
+  });
+  await drawPath(page, [[x0, bottom], ...arch, [x1, bottom]]);
+}
+
+async function drawPath(page: Page, points: Share[]) {
+  await page.mouse.move(...(await canvasPoint(page, points[0])));
+  await page.mouse.down();
+  for (const point of points.slice(1)) await page.mouse.move(...(await canvasPoint(page, point)), { steps: 4 });
+  await page.mouse.up();
+}
+
+// How many pixels of the canvas are mostly red, and mostly green.
+async function resultColours(page: Page): Promise<{ red: number; green: number }> {
+  return canvas(page).evaluate((element) => {
+    const el = element as HTMLCanvasElement;
+    const data = el.getContext('2d')?.getImageData(0, 0, el.width, el.height).data ?? new Uint8ClampedArray();
+    let red = 0;
+    let green = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 128) continue;
+      if (data[i] > 150 && data[i + 1] < 90) red++;
+      if (data[i + 1] > 120 && data[i] < 90) green++;
+    }
+    return { red, green };
+  });
+}
+
+async function scoreShown(page: Page): Promise<number> {
+  return Number((await page.getByRole('status').textContent())?.match(/\d+/)?.[0]);
+}
+
+test('a careful trace of ក scores 3 stars and shows the letter in green', async ({ page }) => {
+  await openTrace(page, traceHref(1));
+  await traceKa(page);
+  await page.getByRole('button', { name: en.trace.done }).tap();
+
+  await expect(page.getByRole('status')).toBeVisible();
+  const score = await scoreShown(page);
+  expect(score).toBeGreaterThanOrEqual(88);
+  await expect(page.getByRole('img', { name: en.score.stars(3) })).toBeVisible();
+  const colours = await resultColours(page);
+  expect(colours.green).toBeGreaterThan(colours.red * 10);
+});
+
+// Lines back and forth across the whole canvas, `spacing` apart (a share of its size).
+function zigzag(spacing: number): Share[] {
+  const points: Share[] = [];
+  for (let y = 0.05, i = 0; y <= 0.95 + 1e-9; y += spacing, i++) points.push([i % 2 ? 0.95 : 0.05, y]);
+  return points;
+}
+
+test('a scribble scores under 40 with no stars, and Try again starts over', async ({ page }) => {
+  await openTrace(page, traceHref(1));
+  // Lines about one and a half ink widths apart, over the whole box.
+  await drawPath(page, zigzag(0.14));
+  await page.getByRole('button', { name: en.trace.done }).tap();
+
+  expect(await scoreShown(page)).toBeLessThan(40);
+  await expect(page.getByRole('img', { name: en.score.stars(0) })).toBeVisible();
+  // No drawing while the result is up.
+  await drawLine(page, [0.2, 0.5], [0.8, 0.5]);
+  await expect(canvas(page)).toHaveAttribute('data-strokes', '1');
+
+  await page.getByRole('button', { name: en.score.tryAgain }).tap();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await expect(canvas(page)).toHaveAttribute('data-strokes', '0');
+  await expect(page.getByRole('button', { name: en.trace.done })).toBeDisabled();
+});
+
+test('colouring in the whole box earns no star', async ({ page }) => {
+  await openTrace(page, traceHref(1));
+  // Lines closer together than the ink is wide.
+  await drawPath(page, zigzag(0.08));
+  await page.getByRole('button', { name: en.trace.done }).tap();
+
+  expect(await scoreShown(page)).toBeLessThan(60);
+  await expect(page.getByRole('img', { name: en.score.stars(0) })).toBeVisible();
+});
+
+test('half a letter earns no star and shows the missed part in red', async ({ page }) => {
+  await openTrace(page, traceHref(1));
+  const [bar] = await guideRuns(page, 'column', 0.5);
+  const [barRow] = await guideRuns(page, 'row', middle(bar));
+  await drawPath(page, [
+    [barRow[0], middle(bar)],
+    [barRow[1], middle(bar)],
+  ]);
+  await page.getByRole('button', { name: en.trace.done }).tap();
+
+  expect(await scoreShown(page)).toBeLessThan(60);
+  await expect(page.getByRole('img', { name: en.score.stars(0) })).toBeVisible();
+  const colours = await resultColours(page);
+  expect(colours.red).toBeGreaterThan(colours.green);
+  expect(colours.green).toBeGreaterThan(0);
+});
+
+// The guide's ink box on the canvas, as shares of its size.
+async function guideBox(page: Page): Promise<{ width: number; height: number }> {
+  return canvas(page).evaluate((element) => {
+    const el = element as HTMLCanvasElement;
+    const data = el.getContext('2d')?.getImageData(0, 0, el.width, el.height).data ?? new Uint8ClampedArray();
+    let [minX, minY, maxX, maxY] = [el.width, el.height, -1, -1];
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 19) continue;
+      const x = ((i - 3) / 4) % el.width;
+      const y = Math.floor((i - 3) / 4 / el.width);
+      [minX, minY, maxX, maxY] = [Math.min(minX, x), Math.min(minY, y), Math.max(maxX, x), Math.max(maxY, y)];
+    }
+    return { width: (maxX - minX + 1) / el.width, height: (maxY - minY + 1) / el.height };
+  });
+}
+
+test('a subscript is drawn on its own, as big as a letter', async ({ page }) => {
+  // ្ក sits under its letter, ្រ is written before it, and ្ស beside it.
+  for (const order of [1, 27, 30]) {
+    await openTrace(page, traceHref(order, 'subscript'));
+    const box = await guideBox(page);
+    expect(Math.max(box.width, box.height), `letter ${order}`).toBeGreaterThan(0.75);
+    expect(Math.max(box.width, box.height), `letter ${order}`).toBeLessThan(0.85);
+  }
 });
