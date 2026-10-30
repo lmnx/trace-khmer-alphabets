@@ -2,6 +2,22 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-30 · Phase 0 live
+
+First deploy, from commit 1608b42, to https://lmnx.github.io/trace-khmer-alphabets/.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | `npm audit --omit=dev` | No dependency changes since the entry below. CI ran `npm audit signatures` and `npm audit --omit=dev --audit-level=high` and passed. |
+| 2 | `npm outdated`, Dependabot PRs | Dependabot's first npm and Actions scans ran and opened no PRs. |
+| 3 | `/security-review` | Nothing to review: everything is pushed, and the skill only reviews changes not yet on GitHub. The manual review below covers 1608b42. From Phase 1 on, run it before pushing (now in CLAUDE.md). |
+| 4 | CSP meta tag, no violations, HTTPS | The live `index.html` is byte-for-byte identical to a local build, so it carries the CSP and referrer tags first in `<head>`. The browser console was empty at 375 px. `http://` gets a 301 redirect to `https://`. GitHub Pages sends no HSTS header and can't be made to. |
+| 5 | Every request to the site's own origin | The page, one JS file, one CSS file and two fonts, all from `lmnx.github.io/trace-khmer-alphabets/`. No other origins. |
+
+- CI run 41045011075: "Check and build" and "Deploy to GitHub Pages" both succeeded. The only annotations are GitHub notices that `ubuntu-latest` is moving to Ubuntu 26, which needs nothing from us yet. If `playwright install --with-deps` ever breaks on the new image, pin `runs-on: ubuntu-24.04` until Playwright catches up.
+- Repo settings, confirmed by Kim: the repo is public, Pages is deployed from GitHub Actions, and HTTPS is enforced. Dependabot alerts, secret scanning, push protection and "Require actions to be pinned to a full-length commit SHA" are all on.
+- Phone check: Kim confirmed ក renders in Kantumruy Pro on their phone.
+
 ## 2026-10-30 · Phase 0 (Setup)
 
 Not yet on GitHub, so checks 4 and 5 ran against the local production build. They need repeating on the live site after the first deploy.

@@ -3,7 +3,7 @@
 A phone-first web app where learners trace the 33 Khmer consonants, get a score, hear feedback, and earn badges. It is for Cambodians, diaspora kids and foreign learners alike. The full plan, the prompt for each phase and the open decisions are in docs/workplan.md.
 
 ## Status
-- Current phase: 0 (Setup), built and checked locally on 2026-10-30. Still to do: create the GitHub repo, turn on its settings, push, and check ក on a real phone at the live link. Then Phase 1.
+- Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone. Next: Phase 1 (Letter data and grid).
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
 
@@ -68,7 +68,7 @@ The app has no server and no secrets, and the repo is public. The risks are the 
 Run these at the end of every phase and before sharing a link. Log the date, the results and any fixes in docs/security-log.md.
 1. `npm audit --omit=dev` shows no high or critical issues. Review any dev-only findings.
 2. `npm outdated` and open Dependabot PRs: upgrade one area at a time, then rerun the tests.
-3. /security-review on the phase's changes.
+3. /security-review on the phase's changes, before they are pushed. It only reviews what isn't on GitHub yet, and a push to main deploys.
 4. Live site: the built index.html carries the CSP meta tag, the console shows no CSP violations, and HTTPS is enforced.
 5. In the network tab, every request goes to the site's own origin.
 
