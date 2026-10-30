@@ -2,6 +2,23 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-30 · Phase 1 (Letter data and grid)
+
+Run before pushing. Checks 4 and 5 ran against the local production build, and need repeating on the live site after the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | `npm audit --omit=dev` | 0 vulnerabilities. Full `npm audit`, dev included: 0. No dependency changes this phase. |
+| 2 | `npm outdated`, Dependabot PRs | Only `typescript` (6.0.3, latest 7.0.2). Still held: typescript-eslint 8.72.1 is the latest and still needs TypeScript below 6.1. No open PRs. |
+| 3 | `/security-review` | No findings. The skill's diff showed only the unpushed docs commit 96f2619, because Phase 1 wasn't committed yet, so the review covered the working tree as well (`git diff` plus the new files). CLAUDE.md now says to commit before running it. |
+| 4 | CSP meta tag, no violations | The built `index.html` starts `<head>` with the CSP and referrer tags, unchanged. e2e passed on Android Chrome and iPhone Safari emulation with no CSP violations or console errors. The browser pane's console was empty at 375 px. |
+| 5 | Every request to the site's own origin | e2e passed on both browsers. In the browser pane: the page, one JS file, one CSS file and two fonts, all from the same origin. The only URLs in the bundle are XML namespace strings and React/Tailwind comment links. |
+
+Review notes:
+- `npm run letters` writes TypeScript source from the hand-edited `letters.csv`. Every string goes through `JSON.stringify`, and every row is checked first: the header, consecutive order, one character that matches its code point, no duplicates, a Latin-only name and series 1 or 2. A bad edit fails with the line number instead of reaching the app. The script runs only on a developer's machine, and `npm test` (so CI too) fails if `letters.ts` is out of date with the CSV.
+- No new dependencies: the generator runs on Node 26's built-in TypeScript support.
+- Tiles render the letter and its name as React text. Each `href` comes from `traceHref` and a number. The router still accepts only `#/trace/1` to `#/trace/33`, now bounded by the letter list.
+
 ## 2026-10-30 · Phase 0 live
 
 First deploy, from commit 1608b42, to https://lmnx.github.io/trace-khmer-alphabets/.

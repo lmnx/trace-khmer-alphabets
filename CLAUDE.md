@@ -3,7 +3,8 @@
 A phone-first web app where learners trace the 33 Khmer consonants, get a score, hear feedback, and earn badges. It is for Cambodians, diaspora kids and foreign learners alike. The full plan, the prompt for each phase and the open decisions are in docs/workplan.md.
 
 ## Status
-- Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone. Next: Phase 1 (Letter data and grid).
+- Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone.
+- Phase 1 (Letter data and grid) built and checked locally 2026-10-30. Still to do: push, then check all 33 tiles on iOS Safari and Android Chrome. Then Phase 2 (Tracing canvas).
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
 
@@ -21,7 +22,8 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 
 ## Layout
 - src/data/letters.csv: source of truth for the 33 consonants. Reviewer corrections go here.
-- src/data/letters.ts: generated from letters.csv. Never edit by hand.
+- src/data/letters.ts: generated from letters.csv by `npm run letters`. Never edit by hand.
+- scripts/: the letters.ts generator. letters-csv.ts checks every CSV row and renders the module.
 - src/lib/scoring.ts: pure scoring functions, no DOM access.
 - src/lib/progress.ts: the only module that touches localStorage.
 - src/lib/audio.ts: the only module that plays sound.
@@ -68,7 +70,7 @@ The app has no server and no secrets, and the repo is public. The risks are the 
 Run these at the end of every phase and before sharing a link. Log the date, the results and any fixes in docs/security-log.md.
 1. `npm audit --omit=dev` shows no high or critical issues. Review any dev-only findings.
 2. `npm outdated` and open Dependabot PRs: upgrade one area at a time, then rerun the tests.
-3. /security-review on the phase's changes, before they are pushed. It only reviews what isn't on GitHub yet, and a push to main deploys.
+3. /security-review on the phase's changes, after committing and before pushing. Its diff covers only commits that aren't on GitHub yet, and a push to main deploys.
 4. Live site: the built index.html carries the CSP meta tag, the console shows no CSP violations, and HTTPS is enforced.
 5. In the network tab, every request goes to the site's own origin.
 
@@ -79,7 +81,8 @@ Run these at the end of every phase and before sharing a link. Log the date, the
 - `npm test`: Vitest unit tests (`*.test.ts` in tests/ and src/).
 - `npm run e2e`: builds, then runs Playwright (`tests/*.spec.ts`) on Android Chrome and iPhone Safari emulation, against the build served under a sub-path like GitHub Pages. Fails on any CSP violation, console error or request to another origin. Once per machine: `npx playwright install chromium webkit`.
 - `npm run lint`: ESLint. It also bans innerHTML, dangerouslySetInnerHTML, document.write and eval, and localStorage outside src/lib/progress.ts.
-- `npm run typecheck`: `tsc -b` over the app, the configs and the tests.
+- `npm run typecheck`: `tsc -b` over the app, the configs, the scripts and the tests.
+- `npm run letters`: regenerates src/data/letters.ts after an edit to letters.csv. `npm test` fails if you forget.
 
 ## Conventions
 - Mobile first: test at 375 px wide. Tap targets are at least 48 px, and grid tiles at least 64 px.

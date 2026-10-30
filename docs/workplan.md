@@ -177,6 +177,9 @@ Convert src/data/letters.csv into a typed src/data/letters.ts (order, char, unic
 
 Done when all 33 letters look right in the grid on iOS Safari and Android Chrome, and the test passes.
 
+- [x] Built and checked locally: letters.ts generated from the CSV, the grid, and typecheck, lint, unit tests and e2e passing. Security checks logged (Oct 30, 2026)
+- [ ] All 33 letters checked in the grid on iOS Safari and Android Chrome
+
 ### Phase 2: Tracing canvas
 
 ```
