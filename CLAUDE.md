@@ -5,8 +5,8 @@ A phone-first web app where learners trace the Khmer numerals and the 33 consona
 ## Status
 - Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone.
 - Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is live from 0aabbd4, and Kim checked it on phones. Phase 1 done 2026-10-30. ឡ showing alone in the Both view goes live with Phase 2.
-- Phase 2 (Tracing canvas) built 2026-10-30, and drawing checked on Kim's phone over Wi-Fi. Kim pushed it (7f42ce7), but CI run 41083567809 failed on a timing race in an e2e test (it read the canvas size before the canvas had resized), so it was never deployed. The fix is in Phase 3's commits.
-- Phase 3 (Scoring) built and tuned with Kim on a phone 2026-10-30. The scoring rule changed (see Tracing and scoring). Still to do: five people's honest attempts feel fair to them. Next: Phase 4 (Audio, progress and badges).
+- Phase 2 (Tracing canvas) done 2026-10-30: drawing checked on Kim's phone over Wi-Fi. Its first push (7f42ce7) failed CI on a timing race in an e2e test and wasn't deployed. It went live with Phase 3.
+- Phase 3 (Scoring) live 2026-10-30 from 4472f1f, tuned with Kim on a phone, with the live-site checks logged. The scoring rule changed (see Tracing and scoring). Still to do: five people's honest attempts feel fair to them. Next: Phase 4 (Audio, progress and badges).
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
 

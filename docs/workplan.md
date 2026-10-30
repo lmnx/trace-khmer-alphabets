@@ -194,7 +194,7 @@ Since Oct 30, 2026 the trace page also opens a number (#/trace/number/:digit) an
 Done when drawing on a phone is smooth, the page never scrolls mid-stroke, and undo works.
 
 - [x] Built (Oct 30, 2026): TraceCanvas with perfect-freehand 1.2.3, Undo, Clear, Done (greyed out until Phase 3 scores), and Previous / Next within the same set. At Kim's request the ink is exactly as wide as the template letter's strokes: 0.07 of the font size, measured for Kantumruy Pro, with no thinning. Drawing checked on Kim's phone over Wi-Fi
-- [ ] Security checks, then live on the site
+- [x] Security checks, then live on the site (Oct 30, 2026, with Phase 3, from 4472f1f)
 
 ### Phase 3: Scoring
 
@@ -208,7 +208,7 @@ Done when the tests pass and five people's honest attempts get scores that feel 
 - [x] Subscripts are traced on their own at full size. Chrome's canvas can't stack them under ◌, so they are drawn under a stand-in ក, which is then erased
 - [x] Tuned with Kim on a phone: careful traces reach 99, rough ones score 50 to 80
 - [ ] Five people's honest attempts feel fair to them
-- [ ] Security checks, then live on the site
+- [x] Security checks, then live on the site (Oct 30, 2026, from 4472f1f)
 
 ### Phase 4: Audio, progress and badges
 

@@ -2,6 +2,19 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-30 · Phases 2 and 3 live
+
+Deployed from commit 4472f1f (Kim pushed it). Checks 1 to 3 are in the entry below, run before the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 4 | CSP meta tag, no violations, HTTPS | The live `index.html`, JS and CSS are byte-for-byte identical to a local build of 4472f1f, so the CSP and referrer tags are in place. The browser pane's console was empty at 375 px through tracing ក, Done and the result. `http://` gets a 301 redirect to `https://`. |
+| 5 | Every request to the site's own origin | The page, one JS file, one CSS file and two fonts, all from `lmnx.github.io/trace-khmer-alphabets/`. No other origins. |
+
+- CI run 41089134332: "Check and build" (Playwright: 33 passed, 1 skipped, which is the Chromium-only touch test on WebKit) and "Deploy to GitHub Pages" both succeeded. This is the run that failed for 7f42ce7 before the e2e race was fixed. The only other annotations are the known `ubuntu-latest` → Ubuntu 26 notices.
+- Live trace of ក in the browser pane: 99, 3 stars, the letter in green.
+- Phone and fairness checks: Kim tuned the scoring on a phone over Wi-Fi. Five people's honest attempts are still to come.
+
 ## 2026-10-30 · Phases 2 and 3 (tracing canvas, scoring)
 
 Run before committing Phase 3 and before the next push. Kim deferred these checks while building. Phase 2 was pushed in between (7f42ce7), but CI run 41083567809 failed, so it was never deployed: the CI gate held. This review covers everything since the last deploy, 0aabbd4. Checks 4 and 5 ran against the local production build, and need repeating on the live site after the push.
