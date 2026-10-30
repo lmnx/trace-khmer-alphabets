@@ -17,11 +17,11 @@ describe('glyph', () => {
     expect(glyph(ka, 'both')).toBe('ក\u17D2ក');
   });
 
-  it('has no subscript or stacked form for ឡ', () => {
+  it('shows ឡ alone in Both and nothing in Subscript, since it has no subscript', () => {
     const la = byChar('ឡ');
     expect(glyph(la, 'letter')).toBe('ឡ');
     expect(glyph(la, 'subscript')).toBeNull();
-    expect(glyph(la, 'both')).toBeNull();
+    expect(glyph(la, 'both')).toBe('ឡ');
   });
 });
 

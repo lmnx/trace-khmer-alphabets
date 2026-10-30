@@ -23,5 +23,11 @@ export const en = {
     subscript: (order: number) => `Subscript of letter ${order}`,
     both: (order: number) => `Letter ${order} with its subscript`,
     number: (digit: number) => `Number ${digit}`,
+    previous: 'Previous',
+    next: 'Next',
+    canvas: 'Tracing area',
+    undo: 'Undo',
+    clear: 'Clear',
+    done: 'Done',
   },
 } as const;

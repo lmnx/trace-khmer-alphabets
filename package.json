@@ -17,6 +17,7 @@
     "letters": "node scripts/generate-letters.ts"
   },
   "dependencies": {
+    "perfect-freehand": "1.2.3",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

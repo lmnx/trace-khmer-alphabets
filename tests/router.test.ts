@@ -27,10 +27,10 @@ describe('parseHash', () => {
     expect(parseHash(numberHref(9))).toEqual({ name: 'trace', target: { kind: 'number', digit: 9 } });
   });
 
-  it('opens ឡ (letter 32) only as a letter, since it has no subscript', () => {
+  it('opens ឡ (letter 32) as a letter or from Both, but not as a subscript', () => {
     expect(parseHash('#/trace/32')).toEqual({ name: 'trace', target: { kind: 'letter', order: 32, form: 'letter' } });
+    expect(parseHash('#/trace/32/both')).toEqual({ name: 'trace', target: { kind: 'letter', order: 32, form: 'both' } });
     expect(parseHash('#/trace/32/subscript')).toEqual(home);
-    expect(parseHash('#/trace/32/both')).toEqual(home);
   });
 
   it('sends anything else home', () => {

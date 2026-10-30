@@ -11,9 +11,10 @@ const COENG = String.fromCodePoint(0x17d2);
 // way Khmer dictionaries and keyboards show it.
 const DOTTED_CIRCLE = String.fromCodePoint(0x25cc);
 
-// The text for a letter in a form, or null when the letter has no subscript.
+// The text for a letter in a form. A letter with no subscript (ឡ) shows alone
+// in Both, and has nothing (null) to show in Subscript.
 export function glyph(letter: Letter, form: Form): string | null {
   if (form === 'letter') return letter.char;
-  if (!letter.subscript) return null;
+  if (!letter.subscript) return form === 'both' ? letter.char : null;
   return form === 'subscript' ? DOTTED_CIRCLE + COENG + letter.char : letter.char + COENG + letter.char;
 }

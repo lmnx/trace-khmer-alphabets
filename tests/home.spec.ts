@@ -1,41 +1,11 @@
-import { expect, test as base, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { CSP } from '../plugins/csp';
 import { letters } from '../src/data/letters';
 import { numerals } from '../src/data/numerals';
 import { en } from '../src/i18n/en';
 import { glyph, type Form } from '../src/lib/forms';
 import { homeHref, numberHref, traceHref } from '../src/lib/router';
-
-// Every test fails on a CSP violation, a console error, an uncaught
-// exception or a request to another origin.
-const test = base.extend<{ siteGuard: void }>({
-  siteGuard: [
-    async ({ page, baseURL }, use) => {
-      const origin = new URL(baseURL ?? '').origin;
-      const problems: string[] = [];
-      page.on('request', (request) => {
-        const url = new URL(request.url());
-        if (url.protocol !== 'data:' && url.protocol !== 'blob:' && url.origin !== origin) {
-          problems.push(`request to another origin: ${url.href}`);
-        }
-      });
-      page.on('console', (message) => {
-        if (message.type() === 'error' || /Content Security Policy/i.test(message.text())) {
-          problems.push(`console ${message.type()}: ${message.text()}`);
-        }
-      });
-      page.on('pageerror', (error) => problems.push(`uncaught: ${error.message}`));
-      await page.addInitScript(() => {
-        document.addEventListener('securitypolicyviolation', (event) => {
-          console.error(`Content Security Policy violation: ${event.violatedDirective} ${event.blockedURI}`);
-        });
-      });
-      await use();
-      expect(problems).toEqual([]);
-    },
-    { auto: true },
-  ],
-});
+import { expect, test } from './fixtures';
 
 const section = (page: Page, heading: string) => page.getByRole('region', { name: heading });
 const hash = (page: Page) => new URL(page.url()).hash;
@@ -87,16 +57,16 @@ test('the grid shows ០ to ៩, then all 33 letters in one block, in order', as
   }
 });
 
-test('the toggle shows the letters as subscripts or stacked, and ឡ sits out', async ({ page }) => {
+test('the toggle shows the letters as subscripts or stacked, and ឡ sits out of Subscript', async ({ page }) => {
   await page.goto('./');
   await expect(page.getByRole('radio', { name: en.grid.forms.letter })).toBeChecked();
   const historyLength = await page.evaluate(() => history.length);
   const items = section(page, en.grid.letters).getByRole('listitem');
 
-  for (const form of ['subscript', 'both'] as const) {
+  for (const [form, links] of [['subscript', 32], ['both', 33]] as const) {
     await pickForm(page, form);
     expect(hash(page)).toBe(homeHref(form));
-    await expect(section(page, en.grid.letters).getByRole('link')).toHaveCount(32);
+    await expect(section(page, en.grid.letters).getByRole('link')).toHaveCount(links);
     for (const [i, letter] of letters.entries()) {
       const item = items.nth(i);
       const text = glyph(letter, form);
@@ -155,6 +125,14 @@ test('tapping a tile opens it on the trace page, and the back link keeps the for
   await page.getByRole('link', { name: en.nav.allLetters }).tap();
   expect(hash(page)).toBe(homeHref('both'));
   await expect(page.getByRole('radio', { name: en.grid.forms.both })).toBeChecked();
+
+  // ឡ has no subscript, so in Both it opens as the letter alone.
+  const la = letters.find((letter) => !letter.subscript);
+  if (!la) throw new Error('expected a letter with no subscript');
+  await page.locator(`a[href="${traceHref(la.order, 'both')}"]`).tap();
+  await expect(page.getByRole('heading', { name: en.trace.letter(la.order) })).toBeVisible();
+  await page.getByRole('link', { name: en.nav.allLetters }).tap();
+  expect(hash(page)).toBe(homeHref('both'));
 });
 
 test('the build carries the CSP and referrer meta tags before any script', async ({ page }) => {

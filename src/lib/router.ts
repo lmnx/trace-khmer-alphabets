@@ -27,8 +27,8 @@ export function parseHash(hash: string): Route {
     const order = Number(letter[1]);
     const form = toForm(letter[2]);
     const known = letters[order - 1];
-    // ឡ has no subscript, so it has no subscript or both page.
-    if (known && (form === 'letter' || known.subscript)) {
+    // ឡ has no subscript, so it has no subscript page.
+    if (known && (form !== 'subscript' || known.subscript)) {
       return { name: 'trace', target: { kind: 'letter', order, form } };
     }
   }
@@ -49,6 +49,10 @@ export function traceHref(order: number, form: Form = 'letter'): string {
 
 export function numberHref(digit: number): string {
   return `#/trace/number/${digit}`;
+}
+
+export function targetHref(target: TraceTarget): string {
+  return target.kind === 'number' ? numberHref(target.digit) : traceHref(target.order, target.form);
 }
 
 // Switches the home page's form without adding a history entry per tap.

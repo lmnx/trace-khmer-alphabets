@@ -67,8 +67,8 @@ function Tile({ href, text, label, fontReady }: { href: string; text: string; la
   );
 }
 
-// ឡ has no subscript form, so in the Subscript and Both views its tile stays
-// in place, greyed out and not a link.
+// ឡ has no subscript form, so in the Subscript view its tile stays in place,
+// greyed out and not a link.
 function NoSubscriptTile({ char, fontReady }: { char: string; fontReady: boolean }) {
   return (
     <div className={`${TILE} bg-stone-100 text-stone-400 ring-1 ring-stone-200`}>
