@@ -180,7 +180,7 @@ Done when all 33 letters look right in the grid on iOS Safari and Android Chrome
 - [x] Built and checked locally: letters.ts generated from the CSV, the grid, and typecheck, lint, unit tests and e2e passing. Security checks logged (Oct 30, 2026)
 - [x] Live at https://lmnx.github.io/trace-khmer-alphabets/ from 53a63d4, live-site checks logged (Oct 30, 2026)
 - [x] Revised at Kim's request (Oct 30, 2026): the numerals ០ to ៩ come first, labelled 0 to 9, then all 33 letters in one block, because the series split doesn't help with writing. A Letter / Subscript / Both toggle shows each letter, its subscript under a dotted circle (◌្ក), or both stacked (ក្ក). ឡ has no subscript, so it is greyed out in those views. Live from 0aabbd4, live-site checks logged
-- [ ] Numbers, letters, subscripts and stacks checked in the grid on iOS Safari and Android Chrome
+- [x] Numbers, letters, subscripts and stacks checked in the grid on iOS Safari and Android Chrome (Oct 30, 2026). Afterwards, at Kim's request, ឡ shows alone in the Both view instead of greyed out
 
 ### Phase 2: Tracing canvas
 
@@ -192,9 +192,14 @@ Since Oct 30, 2026 the trace page also opens a number (#/trace/number/:digit) an
 
 Done when drawing on a phone is smooth, the page never scrolls mid-stroke, and undo works.
 
+- [x] Built (Oct 30, 2026): TraceCanvas with perfect-freehand 1.2.3, Undo, Clear, Done (greyed out until Phase 3 scores), and Previous / Next within the same set. At Kim's request the ink is exactly as wide as the template letter's strokes: 0.07 of the font size, measured for Kantumruy Pro, with no thinning. Drawing checked on Kim's phone over Wi-Fi
+- [ ] Security checks, then live on the site
+
 ### Phase 3: Scoring
 
 ```
+Since Oct 30, 2026: build the target with `layoutGlyph()` at 256 x 256 and the learner's mask with `strokePath()` at `templateStrokeWidth()`, so scoring matches the screen. Leave the dotted circle out of a subscript's target, and consider drawing it fainter than the subscript.
+
 Implement src/lib/scoring.ts exactly as described in the Tracing and scoring section of CLAUDE.md: target mask from the glyph, allowed zone grown by a 12 px tolerance at 256 x 256, coverage, accuracy, harmonic-mean score 0-100, stars at 60/75/88. Keep all thresholds in one exported config object. Write Vitest tests with synthetic strokes: tracing along the glyph scores at least 90, a scribble over the whole box scores under 40, an empty canvas scores 0. When the learner taps Done, show ScoreOverlay with the score, the stars, covered areas in green and missed areas in red, and a Try again button.
 ```
 

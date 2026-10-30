@@ -4,7 +4,8 @@ A phone-first web app where learners trace the Khmer numerals and the 33 consona
 
 ## Status
 - Phase 0 (Setup) done 2026-10-30: live at https://lmnx.github.io/trace-khmer-alphabets/ (repo lmnx/trace-khmer-alphabets), and ក checked on a phone.
-- Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is live from 0aabbd4, with the live-site checks logged. Still to do: Kim checks all three views on iOS Safari and Android Chrome. Then Phase 2 (Tracing canvas).
+- Phase 1 (Letter data and grid) live 2026-10-30 from 53a63d4, with the live-site checks logged. Revised the same day at Kim's request: the numbers ០ to ៩ first, then all 33 letters in one block, with a Letter / Subscript / Both toggle. The revision is live from 0aabbd4, and Kim checked it on phones. Phase 1 done 2026-10-30, except that ឡ now also shows alone in the Both view, which isn't pushed yet.
+- Phase 2 (Tracing canvas) built 2026-10-30, and drawing checked on Kim's phone over Wi-Fi. Not yet pushed. Kim deferred the security checks until before the push. Next: Phase 3 (Scoring).
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4.
 
@@ -19,6 +20,7 @@ Vite + React + TypeScript, Tailwind CSS, perfect-freehand for ink, Vitest + Play
 Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys on every push to main.
 - Routes are hash routes because GitHub Pages can't send every path to index.html: #/, #/subscript and #/both for the grid; #/trace/:order, #/trace/:order/subscript and #/trace/:order/both for a letter; #/trace/number/:digit for a number. src/lib/router.ts accepts nothing else.
 - Vite base is './', so one build works at <user>.github.io/<repo>/ and on a custom domain. Reference public files through import.meta.env.BASE_URL, never with a leading "/". CSS is the exception: write url("/fonts/…") and Vite rewrites it to a relative path at build time.
+- Tailwind scans only src/ (`source(".")` in src/index.css), so words in the docs don't become CSS.
 
 ## Layout
 - src/data/letters.csv: source of truth for the 33 consonants. Reviewer corrections go here.
@@ -26,6 +28,9 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 - scripts/: the letters.ts generator. letters-csv.ts checks every CSV row and renders the module.
 - src/data/numerals.ts: ០ to ៩, computed from their code points. They are labelled with the digits 0 to 9, so they need no CSV.
 - src/lib/forms.ts: the Letter / Subscript / Both forms and `glyph()`, the text each form shows.
+- src/lib/targets.ts: the text to trace for a route, and Previous / Next within its set.
+- src/lib/guide.ts: lays out and draws the guide glyph in a square, and gives the template's stroke width.
+- src/lib/ink.ts: the brush and `strokePath()`, which turns a stroke's points into a perfect-freehand outline.
 - src/lib/scoring.ts: pure scoring functions, no DOM access.
 - src/lib/progress.ts: the only module that touches localStorage.
 - src/lib/audio.ts: the only module that plays sound.
@@ -50,6 +55,8 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 - Accuracy = share of the learner's ink inside the allowed zone.
 - Score = harmonic mean of coverage and accuracy x 100. Stars at 60 / 75 / 88.
 - All thresholds live in one exported config object.
+- Stroke points are stored as shares of the canvas (0 to 1). perfect-freehand needs pixel-sized units, so strokes are built in a 1000-unit INK_SPACE and scaled to the canvas.
+- The ink is as wide as the template's own strokes: STROKE_EM (0.07, measured for Kantumruy Pro) times the guide's font size, with no thinning. Scoring uses the same `layoutGlyph()`, `templateStrokeWidth()` and `strokePath()`, so the mask lines up with what the learner sees.
 
 ## Audio
 - MVP: short sound effects only (stroke, success, stars, badge).
@@ -82,7 +89,7 @@ Run these at the end of every phase and before sharing a link. Log the date, the
 - `npm run build`: production build into dist/, with the CSP and referrer meta tags.
 - `npm run preview`: serve dist/ locally.
 - `npm test`: Vitest unit tests (`*.test.ts` in tests/ and src/).
-- `npm run e2e`: builds, then runs Playwright (`tests/*.spec.ts`) on Android Chrome and iPhone Safari emulation, against the build served under a sub-path like GitHub Pages. Fails on any CSP violation, console error or request to another origin. Once per machine: `npx playwright install chromium webkit`.
+- `npm run e2e`: builds, then runs Playwright (`tests/*.spec.ts`, with the shared guard in tests/fixtures.ts) on Android Chrome and iPhone Safari emulation, against the build served under a sub-path like GitHub Pages. Fails on any CSP violation, console error or request to another origin. Once per machine: `npx playwright install chromium webkit`.
 - `npm run lint`: ESLint. It also bans innerHTML, dangerouslySetInnerHTML, document.write and eval, and localStorage outside src/lib/progress.ts.
 - `npm run typecheck`: `tsc -b` over the app, the configs, the scripts and the tests.
 - `npm run letters`: regenerates src/data/letters.ts after an edit to letters.csv. `npm test` fails if you forget.
