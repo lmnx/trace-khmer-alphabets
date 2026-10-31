@@ -1,3 +1,4 @@
+import { AboutLink } from '../components/AboutLink';
 import { ChevronLeft, ChevronRight, GridIcon } from '../components/icons';
 import { AppIcon } from '../components/Logo';
 import { SoundToggle } from '../components/SoundToggle';
@@ -7,6 +8,7 @@ import { TraceCanvas } from '../components/TraceCanvas';
 import { letters } from '../data/letters';
 import { en } from '../i18n/en';
 import { markFreshStar, markFreshTile } from '../lib/fresh';
+import { usePage } from '../lib/page';
 import { getProgress, recordResult, useProgress } from '../lib/progress';
 import { homeHref, targetHref, type TraceTarget } from '../lib/router';
 import type { TraceScore } from '../lib/scoring';
@@ -20,6 +22,8 @@ export function Trace({ target }: { target: TraceTarget }) {
   const back = homeHref(target.kind === 'letter' ? target.form : 'letter');
   const { previous, next } = neighbours(target);
   const nextHref = next ? targetHref(next) : null;
+  const title = heading(target);
+  usePage(en.pageTitle.page(title));
 
   // Saves the result, and notes what it earned for the home page to show off:
   // a newly lit star in the sky, and a tile whose stars went up.
@@ -44,6 +48,7 @@ export function Trace({ target }: { target: TraceTarget }) {
           {en.nav.allLetters}
         </a>
         <div className="flex items-center gap-2">
+          <AboutLink />
           <SoundToggle />
           <AppIcon className="size-10" />
         </div>
@@ -51,7 +56,9 @@ export function Trace({ target }: { target: TraceTarget }) {
       <div className="flex w-full items-center justify-between gap-2">
         <StepLink href={previous ? targetHref(previous) : null} label={en.trace.previous} direction="previous" />
         <div className="flex flex-col items-center gap-0.5">
-          <h1 className="text-center text-xl font-bold text-fg">{heading(target)}</h1>
+          <h1 tabIndex={-1} className="text-center text-xl font-bold text-fg outline-none">
+            {title}
+          </h1>
           <BestLine target={target} />
         </div>
         <StepLink href={nextHref} label={en.trace.next} direction="next" />

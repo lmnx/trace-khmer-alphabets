@@ -44,6 +44,9 @@ describe('theme', () => {
     ['star', 'sunk'],
     // The side of the form switch that is on.
     ['mint', 'sunk'],
+    // Links on the About page.
+    ['mint', 'page'],
+    ['mint', 'surface'],
     ['star', 'surface'],
     ['star', 'surface-hover'],
     // The home page's headline.

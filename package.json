@@ -15,7 +15,8 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "letters": "node scripts/generate-letters.ts",
-    "icons": "node scripts/icons.ts"
+    "icons": "node scripts/icons.ts",
+    "share": "node scripts/share.ts"
   },
   "dependencies": {
     "perfect-freehand": "1.2.3",

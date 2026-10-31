@@ -46,15 +46,26 @@ export function traceMasks(
   return { target: toMask(glyph), ink: toMask(ink), paths, strokeWidth: width * SIZE };
 }
 
+// Missed parts are striped as well as rose, so learners who can't tell rose
+// from green still see them: diagonal stripes `period` pixels apart at
+// SCORING.size, with a `gap` left clear in each.
+export const MISSED_STRIPES = { period: 8, gap: 3 } as const;
+
+export function inStripeGap(i: number): boolean {
+  const x = i % SIZE;
+  const y = Math.floor(i / SIZE);
+  return (x + y) % MISSED_STRIPES.period < MISSED_STRIPES.gap;
+}
+
 // The result as a picture at SCORING.size: covered pixels in one colour and
-// missed ones in another, for drawing over the canvas, scaled up.
+// missed ones striped in another, for drawing over the canvas, scaled up.
 export function resultImage(covered: Mask, missed: Mask, coveredRgb: string, missedRgb: string): HTMLCanvasElement {
   const ctx = context();
   const image = ctx.createImageData(SIZE, SIZE);
   const [cr, cg, cb] = rgb(coveredRgb);
   const [mr, mg, mb] = rgb(missedRgb);
   for (let i = 0; i < covered.length; i++) {
-    if (!covered[i] && !missed[i]) continue;
+    if (!covered[i] && !(missed[i] && !inStripeGap(i))) continue;
     const [r, g, b] = covered[i] ? [cr, cg, cb] : [mr, mg, mb];
     image.data.set([r, g, b, 255], i * 4);
   }

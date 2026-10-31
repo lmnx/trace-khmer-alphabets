@@ -7,12 +7,15 @@ import type { Form } from './forms';
 //   #/  #/both                     home, showing that form
 //   #/trace/1  #/trace/1/both      a letter, or its full form
 //   #/trace/number/0 to #/trace/number/9          a numeral
+//   #/about                        the About page, with the credits
 
 export type TraceTarget = { kind: 'letter'; order: number; form: Form } | { kind: 'number'; digit: number };
 
-export type Route = { name: 'home'; form: Form } | { name: 'trace'; target: TraceTarget };
+export type Route = { name: 'home'; form: Form } | { name: 'trace'; target: TraceTarget } | { name: 'about' };
 
 const HOME: Route = { name: 'home', form: 'letter' };
+
+export const ABOUT_HREF = '#/about';
 
 function toForm(suffix: string | undefined): Form {
   return suffix === 'both' ? suffix : 'letter';
@@ -21,6 +24,8 @@ function toForm(suffix: string | undefined): Form {
 export function parseHash(hash: string): Route {
   const home = /^#\/(both)$/.exec(hash);
   if (home) return { name: 'home', form: toForm(home[1]) };
+
+  if (hash === ABOUT_HREF) return { name: 'about' };
 
   const letter = /^#\/trace\/([1-9]\d?)(?:\/(both))?$/.exec(hash);
   if (letter) {

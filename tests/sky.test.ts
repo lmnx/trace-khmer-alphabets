@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { letters } from '../src/data/letters';
+import { numerals } from '../src/data/numerals';
 import type { Form } from '../src/lib/forms';
 import { EMPTY_PROGRESS, withResult, type Progress } from '../src/lib/progress';
 import type { TraceTarget } from '../src/lib/router';
+import { CONSONANT_STARS, NUMBER_STARS, POINTS } from '../src/lib/rumduol';
 import type { Stars } from '../src/lib/scoring';
 import {
   earnedTiers,
@@ -143,5 +146,13 @@ describe('resultStory', () => {
     // Improving a star once the sky is lit doesn't light it again.
     const after = withResult(before, letter(16, 'both'), 75, 2);
     expect(play(after, letter(16, 'both'), 95, 3)).toMatchObject({ newBest: true, skyLit: false });
+  });
+});
+
+describe('the rumduol', () => {
+  it('has a star for every number and consonant, in the sky’s order', () => {
+    expect(NUMBER_STARS).toBe(numerals.length);
+    expect(CONSONANT_STARS).toBe(letters.length);
+    expect(POINTS).toHaveLength(SKY.length);
   });
 });

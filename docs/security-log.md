@@ -2,6 +2,40 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-31 · Phase 6 (Polish and ship)
+
+Checks 1 and 2 ran before the commit, check 3 runs on the commit before Kim's push, and checks 4 and 5 on the live site after it.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | `npm audit --omit=dev` | 0 vulnerabilities. The full `npm audit` still shows only the moderate, dev-only minimatch advisory inside ESLint and typescript-eslint (GHSA-g3hv-75wg-m249). Its suggested `--force` fix would downgrade typescript-eslint to 8.14.0, so no. ESLint 10.14.0 doesn't fix it either: it still asks for minimatch ^10.2.6. It only runs on our own lint globs, never on the site. |
+| 2 | `npm outdated`, Dependabot PRs | `eslint` 10.13.0 → 10.14.0, published 2026-10-30: left for Dependabot, whose 7-day cooldown opens it next week. `typescript` 6.0.3 → 7.0.2, still held for typescript-eslint. No new dependency. Lighthouse 13.5.0 ran from a throwaway folder outside the repo (13.6.0 was four days old); it isn't a project dependency. |
+| 3 | `/security-review` | To run on the Phase 6 commit, before the push. |
+
+Manual review of the Phase 6 changes:
+- No CSP change. The e2e guard, which fails on any CSP violation, console error or request to another origin, passed on both browsers (80 passed, 2 skipped on purpose).
+- The link-preview tags (`og:*`, `twitter:card`, `canonical`) name https://playaksor.app/. Browsers never fetch them; only link-preview bots do. They name the custom domain, so the push should wait until playaksor.app serves the site (steps in the workplan), or previews will show no image.
+- The About page links to the font licence on this site (`./fonts/OFL.txt`) and to the source on github.com in a new tab with `rel="noreferrer"` (which implies noopener). A link is navigation, not a request the page makes, and the site already sends no referrer.
+- `#/about` is one more exact match in src/lib/router.ts; anything near it (`#/about/`, `#/about?x`, `#/About`) goes home, with unit tests.
+- `usePage()` sets `document.title` from strings in en.ts, and focuses an h1. No HTML sinks; lint still bans them.
+- scripts/share.ts runs only on a developer's machine, with Playwright's Chromium, on a page it builds itself from the repo's own shapes and fonts. The site doesn't run it.
+- robots.txt allows every crawler, as before (there was none, and GitHub Pages answered 404). The site has nothing private to hide.
+- Kim, the native-speaker reviewer, is credited by first name only, as Kim gave it.
+
+## 2026-10-31 · Phase 5 live
+
+Deployed from 80bf51f, which carries Phase 5 (e0bc48b, afabb8e) and the Phase 4 follow-up (81818f9). Checks 1 to 3 are in the entry below, run before the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 4 | CSP meta tag, no violations, HTTPS | Every live file, `index.html` included, is byte-for-byte identical to a local build of 80bf51f, so the CSP and referrer meta tags are exactly as in CLAUDE.md. CI's e2e suite, which fails on any CSP violation, passed against that same build. `http://` gets a 301 redirect to `https://`. |
+| 5 | Every request to the site's own origin | `index.html` loads only relative files (one JS, one CSS, the icons and the manifest), and the fonts come from the CSS. The only URLs in the bundle are an XML namespace string and React's error-page link, which never become requests. The sound adds none, since it is synthesized. |
+
+- CI run 41190797845 ("Check and deploy") succeeded.
+- `audio/letters/.gitkeep` isn't published, as before (GitHub Pages leaves out dotfiles). Nothing loads it.
+- These checks ran from the command line, as the browser pane wasn't available. The Phase 5 phone check is in the entry below.
+- Browser follow-up, during Phase 6: the live home and trace pages, opened in the browser pane, logged nothing in the console (no CSP violations, no errors), and every request went to lmnx.github.io.
+
 ## 2026-10-31 · Phase 5 (Sound)
 
 Checks 1 and 2 ran before the commit, and check 3 on the commit before Kim's push. Checks 4 and 5 run on the live site after the push.

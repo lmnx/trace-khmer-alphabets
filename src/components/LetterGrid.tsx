@@ -123,6 +123,8 @@ function Tile({
         {label}
         {best && <StarPips count={best.stars} pop={fresh} className="size-2.5" />}
       </span>
+      {/* The star-yellow ring, for screen readers. */}
+      {next && <span className="sr-only">{`, ${en.sky.next}`}</span>}
     </a>
   );
 }

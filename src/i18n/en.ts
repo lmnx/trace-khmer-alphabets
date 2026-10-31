@@ -4,8 +4,14 @@ export const en = {
   // The name in Khmer, អក្សរ ("letters"), shown beside the tagline.
   appTitleKhmer: 'អក្សរ',
   tagline: 'Trace the Khmer Alphabet',
+  // The browser tab's title on each page.
+  pageTitle: {
+    home: 'Aksor · Trace the Khmer Alphabet',
+    page: (name: string) => `${name} · Aksor`,
+  },
   nav: {
     allLetters: 'All letters',
+    about: 'About Aksor',
   },
   // The sound switch. Pressed means muted.
   sound: {
@@ -22,6 +28,41 @@ export const en = {
       'Trace one well to light its star again. Earn badges as the sky fills, up to the Apsara.',
     ],
     start: 'Light the first star',
+  },
+  // The About page. Its credits follow docs/credits.md.
+  about: {
+    title: 'About Aksor',
+    // The name in Khmer goes between these two, in Kantumruy Pro.
+    introBefore: 'Aksor (',
+    introAfter:
+      ', “letters”) helps you learn to write Khmer. Trace the numbers and the 33 consonants, on their own and with their subscripts, and get a score for each.',
+    intro: 'Trace one well to light its star, and relight the night sky one letter at a time.',
+    credits: {
+      heading: 'Credits',
+      font: {
+        name: 'Font',
+        text: 'Kantumruy Pro, by Tep Sovichet and Wei Huang, under the SIL Open Font License 1.1.',
+        link: 'Read the licence',
+      },
+      sounds: { name: 'Sounds', text: 'Made in code for Aksor. No recordings or samples.' },
+      art: { name: 'Art', text: 'The logo, icons, night sky and badges were drawn for Aksor.' },
+      review: {
+        name: 'Khmer review',
+        text: 'Every number, consonant, subscript and badge was checked by Kim, a native Khmer speaker.',
+      },
+    },
+    privacy: {
+      heading: 'Your privacy',
+      lines: [
+        'No accounts, no ads and no tracking.',
+        'Your stars are saved only in this browser, on this device. Clearing the site’s data clears them.',
+      ],
+    },
+    source: {
+      heading: 'Source code',
+      text: 'Aksor is open source.',
+      link: 'See the code on GitHub',
+    },
   },
   sky: {
     heading: 'Night sky',

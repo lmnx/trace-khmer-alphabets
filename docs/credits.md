@@ -1,6 +1,6 @@
 # Credits
 
-The source and licence of every font, sound and voice clip in the app. The About page is built from this file (Phase 5).
+The source and licence of every font, sound and voice clip in the app. The About page (`#/about`, text in `src/i18n/en.ts`) follows this file, so change both together.
 
 ## Fonts
 
@@ -24,11 +24,13 @@ No other fonts. Latin text uses Kantumruy Pro too.
 
 The Aksor logo, app icon and favicons were drawn for this project on 2026-10-30. They contain no third-party artwork or font outlines. The mark follows Kantumruy Pro's ក (a bar over an arch) but is built from lines and an arc, and the wordmark "aksor" is drawn in single strokes. The shapes are in `src/lib/brand.ts`, and `npm run icons` writes `public/icon.svg`, `public/favicon.svg`, `public/logo.svg` and the PNG icons from them. The small line icons on the buttons (`src/components/icons.tsx`) were also drawn for the project.
 
+The share image, `public/share.png` (1200 × 630, the link preview), was drawn for the project on 2026-10-31 by `npm run share` (`scripts/share.ts`) from the app's own shapes: the rumduol from `src/lib/rumduol.ts` with its heart and inner petals lit, the logo from `src/lib/brand.ts`, and text set in the self-hosted Kantumruy Pro, which the OFL allows in images.
+
 ## Night sky and badges
 
-Drawn for this project on 2026-10-31, with no third-party artwork. The night sky's one constellation (`src/components/NightSky.tsx`) is a rumduol, Cambodia's national flower, seen from above and computed in code: a ring of stars at the heart, three small rounded inner petals closing into a dome, and three broad, pointed, slightly curled outer petals, hidden where the inner ones cover them. Its 43 stars are spaced along the visible edges, joined by lines that follow the petals' curves. It was drawn from the flower's general form, not traced from a photo or an emblem. **Still to do:** the reviewer checks that it reads as a rumduol. The stars on the score card and tiles (`src/components/Stars.tsx`) were drawn for the project too.
+Drawn for this project on 2026-10-31, with no third-party artwork. The night sky's one constellation (`src/lib/rumduol.ts`, drawn by `src/components/NightSky.tsx`) is a rumduol, Cambodia's national flower, seen from above and computed in code: a ring of stars at the heart, three small rounded inner petals closing into a dome, and three broad, pointed, slightly curled outer petals, hidden where the inner ones cover them. Its 43 stars are spaced along the visible edges, joined by lines that follow the petals' curves. It was drawn from the flower's general form, not traced from a photo or an emblem. **Still to do:** the reviewer checks that it reads as a rumduol. The stars on the score card and tiles (`src/components/Stars.tsx`) were drawn for the project too.
 
-The badges (`src/components/BadgeShelf.tsx`) are solid icons drawn for the project on 2026-10-31, one per tier of a growing flower: a seed in the soil with its first sprout, a closed bud on a leafy stem, the rumduol in bloom seen from above, and an apsara, a celestial dancer, as a bust in a tiered crown hung with flowers, with a flower garland and one hand raised and bent back. They replaced medals the same day, and the bust replaced an earlier full-figure apsara that Kim found too thin. It is drawn in flat shapes, not traced from a photo of a carving, a performance, or any organisation's emblem. **Still to do:** the native-speaker reviewer checks that the apsara, her crown, flowers and hand are respectful and read as an apsara, and that the rumduol icon reads as a rumduol, like every other piece of Khmer content.
+The badges (`src/components/BadgeShelf.tsx`) are solid icons drawn for the project on 2026-10-31, one per tier of a growing flower: a seed in the soil with its first sprout, a closed bud on a leafy stem, the rumduol in bloom seen from above, and an apsara, a celestial dancer, as a bust in a tiered crown hung with flowers, with a flower garland and one hand raised and bent back. They replaced medals the same day, and the bust replaced an earlier full-figure apsara that Kim found too thin. It is drawn in flat shapes, not traced from a photo of a carving, a performance, or any organisation's emblem. Kim, as the native-speaker reviewer, approved all four badge icons on 2026-10-31, the apsara included.
 
 ## Sound effects
 
@@ -36,8 +38,8 @@ Made for this project on 2026-10-31, with no recordings, samples or third-party 
 
 ## Letter voice clips
 
-None yet. Kim pushed the AI letter voices back from Phase 5 on 2026-10-31 (see "Later: letter voices" in docs/workplan.md). When they come, record the voice, the service, its terms and the reviewer's approval here.
+None yet. Kim pushed the AI letter voices back from Phase 5 on 2026-10-31 (see "Later: letter voices" in the workplan). When they come, record the voice, the service, its terms and the reviewer's approval here.
 
 ## Review
 
-The native-speaker reviewer who checks every letter's shape, name and audio will be credited here, with their permission.
+Kim, a native Khmer speaker, reviewed the app's Khmer content on 2026-10-31 and approved the characters (the numbers ០ to ៩, the 33 consonants and their subscripts) and the badge icons (seed, bud, rumduol and apsara). The About page credits Kim for this. The letter voices, when they come, need the same review.

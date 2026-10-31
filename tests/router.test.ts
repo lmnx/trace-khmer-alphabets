@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { homeHref, numberHref, parseHash, traceHref } from '../src/lib/router';
+import { ABOUT_HREF, homeHref, numberHref, parseHash, traceHref } from '../src/lib/router';
 
 const home = { name: 'home', form: 'letter' };
 
@@ -28,6 +28,11 @@ describe('parseHash', () => {
     expect(parseHash('#/trace/32/both')).toEqual({ name: 'trace', target: { kind: 'letter', order: 32, form: 'both' } });
   });
 
+  it('reads the About page', () => {
+    expect(parseHash('#/about')).toEqual({ name: 'about' });
+    expect(parseHash(ABOUT_HREF)).toEqual({ name: 'about' });
+  });
+
   it('sends anything else home', () => {
     for (const hash of [
       '',
@@ -50,6 +55,11 @@ describe('parseHash', () => {
       '#/other',
       '#/practice',
       '#/practice/trace/1',
+      '#/about/',
+      '#/about/1',
+      '#/About',
+      '#/about?x',
+      '#about',
       // The Subscript form was dropped.
       '#/subscript',
       '#/trace/1/subscript',

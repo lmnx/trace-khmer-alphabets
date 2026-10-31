@@ -1,4 +1,4 @@
-import { useEffect, useRef, type Ref } from 'react';
+import { useEffect, useId, useRef, type Ref } from 'react';
 import { en } from '../i18n/en';
 import { playChime, playFanfare } from '../lib/audio';
 import { burst, useCountUp } from '../lib/motion';
@@ -68,11 +68,11 @@ export function ScoreOverlay({
       )}
       <ul className="flex gap-5 text-sm text-fg-muted">
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="size-3 rounded-full bg-covered" />
+          <span aria-hidden="true" className="size-4 rounded-full bg-covered" />
           {en.score.covered}
         </li>
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="size-3 rounded-full bg-missed" />
+          <MissedSwatch />
           {en.score.missed}
         </li>
       </ul>
@@ -123,6 +123,23 @@ function skyLine(story: ResultStory, stars: Stars): string {
   // The star was lit by the consonant's other form: this is a first try here.
   if (!story.previous) return stars > 0 ? lines.brighter : lines.shining;
   return lines.stillShines(story.previous.score);
+}
+
+// Rose with diagonal stripes, like the missed parts on the letter.
+function MissedSwatch() {
+  const clipId = useId();
+  return (
+    <svg aria-hidden="true" viewBox="0 0 16 16" className="size-4">
+      <clipPath id={clipId}>
+        <circle cx="8" cy="8" r="8" />
+      </clipPath>
+      <g clipPath={`url(#${clipId})`} className="stroke-missed" strokeWidth="3">
+        {[-8, -2, 4, 10, 16, 22].map((offset) => (
+          <line key={offset} x1={offset} y1="16" x2={offset + 16} y2="0" />
+        ))}
+      </g>
+    </svg>
+  );
 }
 
 // A newly lit star popping into the rumduol.
