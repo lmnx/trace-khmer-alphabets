@@ -4,12 +4,13 @@ The security checks from CLAUDE.md, run at the end of every phase and before sha
 
 ## 2026-10-31 · Phase 5 (Sound)
 
-Checks 1 and 2 ran before the commit. Check 3 runs on the commit before Kim pushes, and checks 4 and 5 on the live site after.
+Checks 1 and 2 ran before the commit, and check 3 on the commit before Kim's push. Checks 4 and 5 run on the live site after the push.
 
 | # | Check | Result |
 | --- | --- | --- |
 | 1 | `npm audit --omit=dev` | 0 vulnerabilities. The full `npm audit` shows one new moderate advisory, dev-only: minimatch below 11.0.1 (GHSA-g3hv-75wg-m249, slow matching on crafted glob patterns), pulled in by ESLint and typescript-eslint. No fix is out yet. It only runs on our own lint config's globs, never on the site, so the risk is nil. Dependabot will offer the fix when ESLint takes it. |
 | 2 | `npm outdated`, Dependabot PRs | `eslint` 10.13.0 → 10.14.0 (Dependabot's weekly run with its 7-day cooldown will open it) and `typescript` 6.0.3 → 7.0.2, still held back for typescript-eslint. No new dependency for Phase 5. |
+| 3 | `/security-review` | Run on e0bc48b, covering all three unpushed commits (9c36d4b, 81818f9 and e0bc48b): no findings. It checked that `muted` is read as a strict boolean and only gates sound and the button's state; that the sound loads nothing and uses no user data; that the sparks' offsets come from code, not storage; that fresh.ts is memory only; that every new component renders through React with no HTML sinks; and that nothing changed in the CSP, config, lockfile or workflows. |
 
 Manual review of the Phase 5 changes:
 - No CSP change. The sounds are synthesized with the Web Audio API, which loads nothing, so there are no audio files, no `media-src` and no requests. The e2e guard still fails on any request to another origin, and passed on both browsers.
