@@ -10,7 +10,7 @@ Checks 1 and 2 ran before the commit, check 3 runs on the commit before Kim's pu
 | --- | --- | --- |
 | 1 | `npm audit --omit=dev` | 0 vulnerabilities. The full `npm audit` still shows only the moderate, dev-only minimatch advisory inside ESLint and typescript-eslint (GHSA-g3hv-75wg-m249). Its suggested `--force` fix would downgrade typescript-eslint to 8.14.0, so no. ESLint 10.14.0 doesn't fix it either: it still asks for minimatch ^10.2.6. It only runs on our own lint globs, never on the site. |
 | 2 | `npm outdated`, Dependabot PRs | `eslint` 10.13.0 → 10.14.0, published 2026-10-30: left for Dependabot, whose 7-day cooldown opens it next week. `typescript` 6.0.3 → 7.0.2, still held for typescript-eslint. No new dependency. Lighthouse 13.5.0 ran from a throwaway folder outside the repo (13.6.0 was four days old); it isn't a project dependency. |
-| 3 | `/security-review` | To run on the Phase 6 commit, before the push. |
+| 3 | `/security-review` | Run on b19c496, the one unpushed commit: no findings. It checked that `#/about` is an exact match and no hash text reaches the page, that `usePage()` only sets `document.title` from en.ts text and focuses a fixed selector, that the About page's links are fixed (a same-origin licence, and GitHub in a new tab with `rel="noreferrer"`), that the swatch's clipPath id comes from `useId()`, that the CSP plugin still puts the CSP and referrer tags first in `<head>` with the policy unchanged, and that scripts/share.ts inserts only repo-owned values and runs only on a developer's machine. |
 
 Manual review of the Phase 6 changes:
 - No CSP change. The e2e guard, which fails on any CSP violation, console error or request to another origin, passed on both browsers (80 passed, 2 skipped on purpose).
