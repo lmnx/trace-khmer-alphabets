@@ -2,6 +2,20 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-31 · Phase 4 live
+
+Deployed from commit 3a2e177 (Kim pushed 87577d2 and 3a2e177, with dab2e73 before them). Checks 1 to 3 are in the entry below, run before the push.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 4 | CSP meta tag, no violations, HTTPS | The live `index.html`, JS, CSS, fonts, icons and manifest are byte-for-byte identical to a local build of 3a2e177, so the CSP and referrer tags still come first in `<head>`. No CSP violations in the browser pane's console at 375 px, through the opening, a trace of ក, Done and the home page. Its only entry was a Canvas2D performance warning caused by the check itself reading the canvas's pixels. `http://` gets a 301 redirect to `https://`. |
+| 5 | Every request to the site's own origin | The page, one JS file, one CSS file and two fonts, all from `lmnx.github.io/trace-khmer-alphabets/`. No other origins. The only URLs in the bundle are XML namespace strings and React's error-page links, which never become requests. |
+
+- CI run 41185777820: "Check and build" (Playwright: 57 passed, 1 skipped, which is the Chromium-only touch test on WebKit) and "Deploy to GitHub Pages" both succeeded. The only annotations are the known `ubuntu-latest` → Ubuntu 26 notices.
+- The two empty `.gitkeep` placeholders in `public/audio/` aren't published (GitHub Pages leaves out dotfiles), so they return 404. Nothing loads them.
+- Live play in the browser pane: the opening, then ក traced to 100 with 3 stars and "A star wakes up and joins the constellation!". After a reload the sky showed 1 of 76 stars lit, saved under `aksor:progress`, with no sideways scroll at 375 px.
+- Phone check: Kim played Phase 4 on a phone before the commit (entry below).
+
 ## 2026-10-31 · Phase 4 (Night sky story and progression)
 
 Committed as 87577d2. Check 3 ran after the commit, before the push. Checks 4 and 5 ran against the local production build and need repeating on the live site after the push.

@@ -255,7 +255,7 @@ Done when progress survives a reload and works in a private window without crash
 - [x] Unit tests for reading saved progress, the sky, the next star and best scores; e2e tests for the opening, every character open, a star lighting the sky and surviving a reload, a new best, the finale with and without reduced motion, and blocked, full or corrupt storage
 - [x] Played on Kim's phone over Wi-Fi (Oct 31, 2026)
 - [ ] The Apsara badge and the rumduol constellation checked by the native-speaker reviewer (both drawn fresh for the app, see docs/credits.md)
-- [ ] Committed, /security-review, live, and live checks logged
+- [x] Committed (87577d2, 3a2e177), /security-review with no findings, live from 3a2e177 with the live checks logged (Oct 31, 2026)
 
 ### Phase 5: Sound
 
