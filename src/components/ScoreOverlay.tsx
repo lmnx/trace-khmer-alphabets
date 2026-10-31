@@ -1,5 +1,6 @@
 import { useEffect, useRef, type Ref } from 'react';
 import { en } from '../i18n/en';
+import { playChime, playFanfare } from '../lib/audio';
 import { burst, useCountUp } from '../lib/motion';
 import { useProgress } from '../lib/progress';
 import { starsFor, type Stars, type TraceScore } from '../lib/scoring';
@@ -16,7 +17,8 @@ import { GO_BUTTON, STAR_BUTTON } from './styles';
 // Three stars or a new best sends little stars flying from the score. Below,
 // a newly lit star pops into the rumduol, and a new badge drops in with
 // sparks round it; lighting the last star brings the whole flower in, star by
-// star.
+// star. A chime rings as each star pops in, and a fanfare plays for a new
+// badge or the whole sky.
 // Then what the green and rose on the letter mean, Try again and Next.
 // Screen readers get the final score at once, not the count.
 export function ScoreOverlay({
@@ -34,6 +36,8 @@ export function ScoreOverlay({
 }) {
   const shown = useCountUp(result.score);
   const counted = shown === result.score;
+  const lit = starsFor(shown);
+  useResultSounds(lit, counted, story);
   const reveal = `motion-safe:transition-[opacity,scale] motion-safe:duration-300 ${counted ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`;
   return (
     <div
@@ -48,7 +52,7 @@ export function ScoreOverlay({
             {shown}
           </p>
           <div className="flex flex-col items-start gap-1.5">
-            <StarRow count={result.stars} lit={starsFor(shown)} />
+            <StarRow count={result.stars} lit={lit} />
             <p className={`text-lg font-semibold text-fg ${reveal}`}>{en.score.praise[result.stars]}</p>
           </div>
         </div>
@@ -86,6 +90,26 @@ export function ScoreOverlay({
       </div>
     </div>
   );
+}
+
+// A chime as each star pops in, climbing star by star, and a fanfare once the
+// count ends if the result earned a badge or lit the whole sky. With reduced
+// motion the stars all show at once, so their chimes play one after another.
+function useResultSounds(lit: Stars, counted: boolean, story: ResultStory) {
+  const chimed = useRef(0);
+  useEffect(() => {
+    const from = chimed.current;
+    for (let star = from + 1; star <= lit; star++) playChime(star as Exclude<Stars, 0>, (star - from - 1) * 0.16);
+    chimed.current = Math.max(from, lit);
+  }, [lit]);
+
+  const celebrate = story.newTiers.length > 0 || story.skyLit;
+  const fanfared = useRef(false);
+  useEffect(() => {
+    if (!counted || !celebrate || fanfared.current) return;
+    fanfared.current = true;
+    playFanfare(story.skyLit, 0.4);
+  }, [counted, celebrate, story.skyLit]);
 }
 
 // The line from the sky: what this result did to the character's star,

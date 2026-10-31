@@ -7,6 +7,10 @@ export const en = {
   nav: {
     allLetters: 'All letters',
   },
+  // The sound switch. Pressed means muted.
+  sound: {
+    mute: 'Mute sound',
+  },
   home: {
     intro: 'Help us relight the sky. One letter, one star.',
   },

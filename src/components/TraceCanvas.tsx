@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { en } from '../i18n/en';
+import { playTick } from '../lib/audio';
 import { useKhmerFontReady } from '../lib/fonts';
 import { drawTraceable, layoutGlyph, templateStrokeWidth } from '../lib/guide';
 import { INK_SPACE, strokePath, type Point, type Stroke } from '../lib/ink';
@@ -22,7 +23,7 @@ const INK_OVER_RESULT_ALPHA = 0.3;
 // Done scores the strokes, hands the score to `onScore`, which saves it and
 // says what it means for the story, and shows the result until Try again.
 // `next` links the result to the next character, if there is one to go to. A
-// ring pulses round the canvas as each stroke ends, and again, in the
+// ring pulses round the canvas and a soft tick sounds as each stroke ends, and again, in the
 // result's colour, after Done.
 export function TraceCanvas({
   text,
@@ -153,6 +154,7 @@ export function TraceCanvas({
     drawing.current = null;
     setStrokes((previous) => [...previous, stroke.points]);
     pulse(ringRef.current);
+    playTick();
   }
 
   function score() {

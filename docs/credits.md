@@ -32,11 +32,11 @@ The badges (`src/components/BadgeShelf.tsx`) are solid icons drawn for the proje
 
 ## Sound effects
 
-None yet. Added in Phase 5.
+Made for this project on 2026-10-31, with no recordings, samples or third-party sounds. Every sound is synthesized in the browser by `src/lib/audio.ts` with the Web Audio API, from plain oscillators and volume envelopes written in code: a short falling tick as each stroke ends, a bell chime per star (a note with two overtones at a bell's ratios, on G, C and E), and a fanfare (a rising C major run into a held chord with a bell on top). The app ships no sound files, so there is nothing to license.
 
 ## Letter voice clips
 
-None yet. Phase 5 tests an AI Khmer voice. Record the voice, the service, its terms and the reviewer's approval here.
+None yet. Kim pushed the AI letter voices back from Phase 5 on 2026-10-31 (see "Later: letter voices" in docs/workplan.md). When they come, record the voice, the service, its terms and the reviewer's approval here.
 
 ## Review
 

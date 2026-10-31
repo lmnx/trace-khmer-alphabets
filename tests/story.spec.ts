@@ -2,13 +2,11 @@ import type { Page } from '@playwright/test';
 import { letters } from '../src/data/letters';
 import { numerals } from '../src/data/numerals';
 import { en } from '../src/i18n/en';
-import { STORAGE_KEY, withResult, type Progress } from '../src/lib/progress';
+import { STORAGE_KEY, withResult } from '../src/lib/progress';
 import { homeHref, numberHref, traceHref, type TraceTarget } from '../src/lib/router';
-import type { Stars } from '../src/lib/scoring';
 import type { Tier } from '../src/lib/sky';
-import { targetKey } from '../src/lib/targets';
 import { drawLine, drawPath, guideShown, openTrace, settle, traceKa, zigzag } from './draw';
-import { expect, seedProgress, test, WELCOMED } from './fixtures';
+import { expect, seedProgress, skyLitBut, test, WELCOMED } from './fixtures';
 
 // The night sky story: the opening, saved progress, the sky's one
 // constellation, the celebrations, and what happens when storage is blocked.
@@ -21,17 +19,6 @@ const section = (page: Page, heading: string) => page.getByRole('region', { name
 const sky = (page: Page) => section(page, en.sky.heading);
 const letterItem = (page: Page, order: number) => section(page, en.grid.letters).getByRole('listitem').nth(order - 1);
 const result = (page: Page) => page.getByRole('status');
-
-// Every star in the sky lit, except `left`'s: every number, and every
-// consonant in its base form, each with `stars`.
-function skyLitBut(left: TraceTarget, stars: Stars = 2): Progress {
-  const all: TraceTarget[] = [
-    ...numerals.map((numeral): TraceTarget => ({ kind: 'number', digit: numeral.digit })),
-    ...letters.map((letter): TraceTarget => ({ kind: 'letter', order: letter.order, form: 'letter' })),
-  ];
-  const others = all.filter((target) => targetKey(target) !== targetKey(left));
-  return others.reduce((progress, target) => withResult(progress, target, 90, stars), WELCOMED);
-}
 
 const badges = (page: Page) => section(page, en.badges.heading);
 const tier = (page: Page, name: Tier) => badges(page).locator(`[data-tier="${name}"]`);

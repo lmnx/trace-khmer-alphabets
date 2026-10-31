@@ -4,8 +4,8 @@ import type { Stars } from './scoring';
 import { SETS, targetKey } from './targets';
 
 // The learner's progress, kept in this browser: whether they have seen the
-// opening, and each character's best score and stars in each form. The only
-// module that touches localStorage.
+// opening, whether they muted the sound, and each character's best score and
+// stars in each form. The only module that touches localStorage.
 //
 // Storage can be blocked (some private windows), full, or edited by hand. So
 // every call is wrapped in try/catch, what comes back is checked field by
@@ -20,11 +20,13 @@ export interface Best {
 export interface Progress {
   // The learner has seen the opening.
   readonly welcomed: boolean;
+  // The learner turned the sound off.
+  readonly muted: boolean;
   // Each character's best, by targetKey(). Missing until its first result.
   readonly best: Readonly<Partial<Record<string, Best>>>;
 }
 
-export const EMPTY_PROGRESS: Progress = { welcomed: false, best: {} };
+export const EMPTY_PROGRESS: Progress = { welcomed: false, muted: false, best: {} };
 
 export const STORAGE_KEY = 'aksor:progress';
 const VERSION = 1;
@@ -47,6 +49,7 @@ function toBest(value: unknown): Best | null {
 
 // Reads what localStorage held. Unknown characters and malformed entries are
 // dropped one by one; anything that isn't version 1 of this shape is empty.
+// `muted` came after the first saves, so a save without it reads as sound on.
 export function parseProgress(raw: string | null): Progress {
   if (raw === null) return EMPTY_PROGRESS;
   let data: unknown;
@@ -64,11 +67,11 @@ export function parseProgress(raw: string | null): Progress {
       if (entry && KNOWN_KEYS.has(key)) best[key] = entry;
     }
   }
-  return { welcomed: data.welcomed === true, best };
+  return { welcomed: data.welcomed === true, muted: data.muted === true, best };
 }
 
 export function serializeProgress(progress: Progress): string {
-  return JSON.stringify({ v: VERSION, welcomed: progress.welcomed, best: progress.best });
+  return JSON.stringify({ v: VERSION, welcomed: progress.welcomed, muted: progress.muted, best: progress.best });
 }
 
 // The progress after a result: the character's best score and best stars,
@@ -122,6 +125,11 @@ export function recordResult(target: TraceTarget, score: number, stars: Stars): 
 export function markWelcomed(): void {
   const progress = getProgress();
   if (!progress.welcomed) update({ ...progress, welcomed: true });
+}
+
+export function setMuted(muted: boolean): void {
+  const progress = getProgress();
+  if (progress.muted !== muted) update({ ...progress, muted });
 }
 
 // Another tab saved progress: read it again, checked like any other read.

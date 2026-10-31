@@ -28,6 +28,7 @@ describe('parseProgress', () => {
     });
     expect(parseProgress(raw)).toEqual({
       welcomed: true,
+      muted: false,
       best: { 'letter/1': { score: 91, stars: 3 }, 'number/0': { score: 0, stars: 0 }, 'both/33': { score: 60, stars: 1 } },
     });
   });
@@ -74,8 +75,15 @@ describe('parseProgress', () => {
   it('keeps welcomed only when it is exactly true, and survives a bad best', () => {
     expect(parseProgress(stored({ v: 1, welcomed: 'true', best: {} })).welcomed).toBe(false);
     expect(parseProgress(stored({ v: 1, welcomed: 1 })).welcomed).toBe(false);
-    expect(parseProgress(stored({ v: 1, welcomed: true, best: [] }))).toEqual({ welcomed: true, best: {} });
-    expect(parseProgress(stored({ v: 1, welcomed: true, best: 'all' }))).toEqual({ welcomed: true, best: {} });
+    expect(parseProgress(stored({ v: 1, welcomed: true, best: [] }))).toEqual({ welcomed: true, muted: false, best: {} });
+    expect(parseProgress(stored({ v: 1, welcomed: true, best: 'all' }))).toEqual({ welcomed: true, muted: false, best: {} });
+  });
+
+  it('keeps muted only when it is exactly true, so saves from before it read as sound on', () => {
+    expect(parseProgress(stored({ v: 1, muted: true, best: {} })).muted).toBe(true);
+    for (const muted of ['true', 1, null, undefined]) {
+      expect(parseProgress(stored({ v: 1, muted, best: {} })).muted, String(muted)).toBe(false);
+    }
   });
 
   it('lets nothing reach the object prototype', () => {
@@ -88,7 +96,7 @@ describe('parseProgress', () => {
   });
 
   it('reads back what serializeProgress writes', () => {
-    const progress: Progress = { welcomed: true, best: { 'both/12': { score: 77, stars: 2 } } };
+    const progress: Progress = { welcomed: true, muted: true, best: { 'both/12': { score: 77, stars: 2 } } };
     expect(parseProgress(serializeProgress(progress))).toEqual(progress);
   });
 });
@@ -142,11 +150,12 @@ describe('the progress store', () => {
   it('reads saved progress, and saves each result', async () => {
     const storage = memoryStorage({ [STORAGE_KEY]: stored({ v: 1, welcomed: true, best: { 'number/0': { score: 61, stars: 1 } } }) });
     const store = await loadStore({ value: storage });
-    expect(store.getProgress()).toEqual({ welcomed: true, best: { 'number/0': { score: 61, stars: 1 } } });
+    expect(store.getProgress()).toEqual({ welcomed: true, muted: false, best: { 'number/0': { score: 61, stars: 1 } } });
 
     store.recordResult(ka, 88, 3);
     expect(parseProgress(storage.data.get(STORAGE_KEY) ?? null)).toEqual({
       welcomed: true,
+      muted: false,
       best: { 'number/0': { score: 61, stars: 1 }, 'letter/1': { score: 88, stars: 3 } },
     });
   });
@@ -165,7 +174,8 @@ describe('the progress store', () => {
     expect(store.getProgress()).toEqual(EMPTY_PROGRESS);
     expect(() => store.recordResult(ka, 90, 3)).not.toThrow();
     expect(() => store.markWelcomed()).not.toThrow();
-    expect(store.getProgress()).toEqual({ welcomed: true, best: { 'letter/1': { score: 90, stars: 3 } } });
+    expect(() => store.setMuted(true)).not.toThrow();
+    expect(store.getProgress()).toEqual({ welcomed: true, muted: true, best: { 'letter/1': { score: 90, stars: 3 } } });
   });
 
   it('keeps working in memory when reads and writes throw', async () => {
@@ -191,5 +201,20 @@ describe('the progress store', () => {
     store.markWelcomed();
     expect(storage.setItem).toHaveBeenCalledTimes(1);
     expect(parseProgress(storage.data.get(STORAGE_KEY) ?? null).welcomed).toBe(true);
+  });
+
+  it('saves mute, keeping the stars', async () => {
+    const storage = memoryStorage({ [STORAGE_KEY]: stored({ v: 1, welcomed: true, best: { 'number/0': { score: 61, stars: 1 } } }) });
+    const store = await loadStore({ value: storage });
+    store.setMuted(true);
+    store.setMuted(true);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+    expect(parseProgress(storage.data.get(STORAGE_KEY) ?? null)).toEqual({
+      welcomed: true,
+      muted: true,
+      best: { 'number/0': { score: 61, stars: 1 } },
+    });
+    store.setMuted(false);
+    expect(parseProgress(storage.data.get(STORAGE_KEY) ?? null).muted).toBe(false);
   });
 });

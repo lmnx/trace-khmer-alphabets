@@ -1,5 +1,10 @@
 import { expect, test as base, type Page } from '@playwright/test';
-import { serializeProgress, STORAGE_KEY, type Progress } from '../src/lib/progress';
+import { letters } from '../src/data/letters';
+import { numerals } from '../src/data/numerals';
+import { serializeProgress, STORAGE_KEY, withResult, type Progress } from '../src/lib/progress';
+import type { TraceTarget } from '../src/lib/router';
+import type { Stars } from '../src/lib/scoring';
+import { targetKey } from '../src/lib/targets';
 
 // Every test fails on a CSP violation, a console error, an uncaught
 // exception or a request to another origin.
@@ -46,4 +51,15 @@ export async function seedProgress(page: Page, progress: Progress) {
 }
 
 // A returning learner who has seen the opening, with no stars yet.
-export const WELCOMED: Progress = { welcomed: true, best: {} };
+export const WELCOMED: Progress = { welcomed: true, muted: false, best: {} };
+
+// Every star in the sky lit, except `left`'s: every number, and every
+// consonant in its base form, each with `stars`.
+export function skyLitBut(left: TraceTarget, stars: Stars = 2): Progress {
+  const all: TraceTarget[] = [
+    ...numerals.map((numeral): TraceTarget => ({ kind: 'number', digit: numeral.digit })),
+    ...letters.map((letter): TraceTarget => ({ kind: 'letter', order: letter.order, form: 'letter' })),
+  ];
+  const others = all.filter((target) => targetKey(target) !== targetKey(left));
+  return others.reduce((progress, target) => withResult(progress, target, 90, stars), WELCOMED);
+}

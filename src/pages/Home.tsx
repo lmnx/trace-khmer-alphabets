@@ -3,6 +3,7 @@ import { LetterGrid } from '../components/LetterGrid';
 import { AppIcon, Wordmark } from '../components/Logo';
 import { NightSky } from '../components/NightSky';
 import { Opening } from '../components/Opening';
+import { SoundToggle } from '../components/SoundToggle';
 import { en } from '../i18n/en';
 import { useKhmerFontReady } from '../lib/fonts';
 import type { Form } from '../lib/forms';
@@ -18,7 +19,8 @@ export function Home({ form }: { form: Form }) {
   const opening = !progress.welcomed && first !== null;
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 pt-8 pr-[max(1rem,env(safe-area-inset-right))] pb-[max(2rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] motion-safe:animate-enter">
-      <header className="flex flex-col items-center gap-3 text-center">
+      <header className="relative flex flex-col items-center gap-3 text-center">
+        <SoundToggle className="absolute -top-4 right-0" />
         <h1 className="flex items-center gap-3">
           <AppIcon className="size-14 shrink-0" />
           <Wordmark className="h-10 w-auto text-fg" />

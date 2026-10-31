@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, GridIcon } from '../components/icons';
 import { AppIcon } from '../components/Logo';
+import { SoundToggle } from '../components/SoundToggle';
 import { StarPips } from '../components/Stars';
 import { FOCUS } from '../components/styles';
 import { TraceCanvas } from '../components/TraceCanvas';
@@ -42,7 +43,10 @@ export function Trace({ target }: { target: TraceTarget }) {
           <GridIcon />
           {en.nav.allLetters}
         </a>
-        <AppIcon className="size-10" />
+        <div className="flex items-center gap-2">
+          <SoundToggle />
+          <AppIcon className="size-10" />
+        </div>
       </nav>
       <div className="flex w-full items-center justify-between gap-2">
         <StepLink href={previous ? targetHref(previous) : null} label={en.trace.previous} direction="previous" />
