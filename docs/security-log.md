@@ -4,13 +4,13 @@ The security checks from CLAUDE.md, run at the end of every phase and before sha
 
 ## 2026-10-31 · Phase 4 (Night sky story and progression)
 
-Run before committing. Check 3 runs after the commit and before the push, and checks 4 and 5 need repeating on the live site after the push. These ran against the local production build.
+Committed as 87577d2. Check 3 ran after the commit, before the push. Checks 4 and 5 ran against the local production build and need repeating on the live site after the push.
 
 | # | Check | Result |
 | --- | --- | --- |
 | 1 | `npm audit --omit=dev` | 0 vulnerabilities. Full `npm audit`, dev included: 0. `npm audit signatures`: 88 packages have verified attestations. `npm install-scripts ls`: no packages with unreviewed install scripts. No dependency changes this phase. |
 | 2 | `npm outdated`, Dependabot PRs | `typescript` 7.0.2 is still held. `eslint` 10.14.0 (dev only, published 2026-10-30) still waits for Dependabot's 7-day cooldown. Open Dependabot PRs couldn't be listed here, because `gh` isn't installed: Kim to check on GitHub. |
-| 3 | `/security-review` | Not yet: after the commit, before the push. |
+| 3 | `/security-review` | No findings, over the two unpushed commits dab2e73 (docs) and 87577d2 (Phase 4). It checked how saved progress is read (JSON in try/catch, version 1 only, only the 76 known keys written into a fresh object, so nothing like `__proto__` gets through, scores and stars range-checked), storage events from other tabs (read again through the same check), the router (only narrowed), every new link (built from validated targets, never from stored text), the SVG components (constant or computed shapes, no `href` or `foreignObject`), the motion code, and CSP compatibility (no `style` attributes, inline scripts or new URLs). No dependency, workflow or build changes. Editing localStorage by hand can light someone's own sky, which has no security impact. |
 | 4 | CSP meta tag, no violations | The CSP and referrer tags are unchanged. `npm run e2e` passed in one clean run: 57 passed, 1 skipped (the Chromium-only touch test on WebKit), with no CSP violations, console errors or requests to other origins, on Android Chrome and iPhone Safari emulation, with motion on and reduced. Earlier runs that day lost tests to frozen browsers while the machine was swapping hard (12.9 of 13.3 GB swap used); none failed an assertion on a page that responded. The new motion is CSS classes behind `motion-safe:` and `element.animate()` (Web Animations), which `style-src 'self'` allows. No component sets a `style` attribute. |
 | 5 | Every request to the site's own origin | e2e fails on any request to another origin and passed. No new files are fetched: the sky, the stars and the Apsara badge are inline SVG in the bundle. |
 
