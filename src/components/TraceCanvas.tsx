@@ -6,6 +6,7 @@ import { INK_SPACE, strokePath, type Point, type Stroke } from '../lib/ink';
 import { resultImage, traceMasks } from '../lib/masks';
 import { prefersReducedMotion, pulse } from '../lib/motion';
 import { scoreTrace, type TraceScore } from '../lib/scoring';
+import type { ResultStory } from '../lib/sky';
 import { canvasColors } from '../lib/theme';
 import { CheckIcon, ClearIcon, UndoIcon } from './icons';
 import { ScoreOverlay } from './ScoreOverlay';
@@ -18,10 +19,20 @@ const INK_OVER_RESULT_ALPHA = 0.3;
 
 // A square canvas with the character drawn faintly, for tracing with a finger,
 // pen or mouse. Strokes are kept as arrays of points; Undo drops the last one.
-// Done scores the strokes and shows the result until Try again. A ring pulses
-// round the canvas as each stroke ends, and again, in the result's colour,
-// after Done.
-export function TraceCanvas({ text }: { text: string }) {
+// Done scores the strokes, hands the score to `onScore`, which saves it and
+// says what it means for the story, and shows the result until Try again.
+// `next` links the result to the next character, if there is one to go to. A
+// ring pulses round the canvas as each stroke ends, and again, in the
+// result's colour, after Done.
+export function TraceCanvas({
+  text,
+  onScore,
+  next,
+}: {
+  text: string;
+  onScore: (result: TraceScore) => ResultStory;
+  next: string | null;
+}) {
   const fontReady = useKhmerFontReady();
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -30,6 +41,7 @@ export function TraceCanvas({ text }: { text: string }) {
   const [size, setSize] = useState(0);
   const [strokes, setStrokes] = useState<readonly Stroke[]>([]);
   const [result, setResult] = useState<TraceScore | null>(null);
+  const [story, setStory] = useState<ResultStory | null>(null);
   // The stroke in progress lives in a ref, so each pointer move repaints the
   // canvas without re-rendering React.
   const drawing = useRef<{ pointerId: number; points: Point[] } | null>(null);
@@ -145,12 +157,15 @@ export function TraceCanvas({ text }: { text: string }) {
 
   function score() {
     const { target, ink, paths, strokeWidth } = traceMasks(text, strokes);
-    setResult(scoreTrace(target, ink, paths, strokeWidth));
+    const scored = scoreTrace(target, ink, paths, strokeWidth);
+    setStory(onScore(scored));
+    setResult(scored);
   }
 
   function tryAgain() {
     setStrokes([]);
     setResult(null);
+    setStory(null);
   }
 
   const empty = strokes.length === 0;
@@ -182,8 +197,8 @@ export function TraceCanvas({ text }: { text: string }) {
           className={`pointer-events-none absolute inset-0 rounded-3xl opacity-0 ring-4 ${ringColor}`}
         />
       </div>
-      {result ? (
-        <ScoreOverlay ref={resultRef} result={result} onTryAgain={tryAgain} />
+      {result && story ? (
+        <ScoreOverlay ref={resultRef} result={result} story={story} next={next} onTryAgain={tryAgain} />
       ) : (
         <div className="grid w-[min(100%,24rem)] grid-cols-3 gap-2">
           <button type="button" className={BUTTON} disabled={empty} onClick={() => setStrokes(strokes.slice(0, -1))}>

@@ -6,19 +6,15 @@ const home = { name: 'home', form: 'letter' };
 describe('parseHash', () => {
   it('reads the home page in each form', () => {
     expect(parseHash('#/')).toEqual(home);
-    expect(parseHash('#/subscript')).toEqual({ name: 'home', form: 'subscript' });
     expect(parseHash('#/both')).toEqual({ name: 'home', form: 'both' });
-    for (const form of ['letter', 'subscript', 'both'] as const) {
+    for (const form of ['letter', 'both'] as const) {
       expect(parseHash(homeHref(form))).toEqual({ name: 'home', form });
     }
   });
 
   it('reads letters 1 to 33 in each form', () => {
     expect(parseHash('#/trace/1')).toEqual({ name: 'trace', target: { kind: 'letter', order: 1, form: 'letter' } });
-    expect(parseHash('#/trace/33/subscript')).toEqual({
-      name: 'trace',
-      target: { kind: 'letter', order: 33, form: 'subscript' },
-    });
+    expect(parseHash('#/trace/33/both')).toEqual({ name: 'trace', target: { kind: 'letter', order: 33, form: 'both' } });
     expect(parseHash(traceHref(12, 'both'))).toEqual({ name: 'trace', target: { kind: 'letter', order: 12, form: 'both' } });
   });
 
@@ -27,10 +23,9 @@ describe('parseHash', () => {
     expect(parseHash(numberHref(9))).toEqual({ name: 'trace', target: { kind: 'number', digit: 9 } });
   });
 
-  it('opens ឡ (letter 32) as a letter or from Both, but not as a subscript', () => {
+  it('opens ឡ (letter 32) as a letter or from Both', () => {
     expect(parseHash('#/trace/32')).toEqual({ name: 'trace', target: { kind: 'letter', order: 32, form: 'letter' } });
     expect(parseHash('#/trace/32/both')).toEqual({ name: 'trace', target: { kind: 'letter', order: 32, form: 'both' } });
-    expect(parseHash('#/trace/32/subscript')).toEqual(home);
   });
 
   it('sends anything else home', () => {
@@ -53,6 +48,11 @@ describe('parseHash', () => {
       '#/trace/number/-1',
       '#/trace/number/1/subscript',
       '#/other',
+      '#/practice',
+      '#/practice/trace/1',
+      // The Subscript form was dropped.
+      '#/subscript',
+      '#/trace/1/subscript',
     ]) {
       expect(parseHash(hash), hash).toEqual(home);
     }

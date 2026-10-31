@@ -1,6 +1,6 @@
 # Trace the Khmer Alphabet — Claude Code Workplan
 
-Oct 29, 2026 · @Kim · living copy in the repo, last updated Oct 30, 2026
+Oct 29, 2026 · @Kim · living copy in the repo, last updated Oct 31, 2026
 
 ## Overview
 
@@ -20,7 +20,7 @@ The first version, the MVP, is one complete loop: pick a letter, trace it, get a
 | Feature | MVP | Later |
 | --- | --- | --- |
 | Grid with the numerals ០ to ៩ first, then all 33 consonants in one block | Yes |  |
-| A Letter / Subscript / Both toggle on the grid: each consonant's subscript (coeng) form, alone or stacked like ក្ក | Yes |  |
+| A Letter / Both toggle on the grid: each consonant alone, or in its full form stacked with its subscript (coeng) like ក្ក. The Subscript-alone view was dropped on Oct 31, 2026 | Yes |  |
 | Trace screen with a faint letter guide, plus undo and clear | Yes |  |
 | Score from 0 to 100 and 1 to 3 stars, with missed areas highlighted | Yes |  |
 | Sound effects for strokes, stars and badges | Yes |  |
@@ -224,14 +224,14 @@ Done when typecheck, lint, unit tests, build and e2e pass with no CSP violations
 - [x] Brand picked from three directions (Ink trail, Tile pop, Star path), Oct 30, 2026: Star path's dark palette with a matching green added, and Ink trail's logo (ក half traced, with a dotted guide and a dot for the finger). Themes stay switchable: every colour is a semantic CSS variable, so a light theme later is one block of CSS
 - [x] Logo, app icon, favicon, apple-touch-icon and manifest icons in public/, written by `npm run icons` from src/lib/brand.ts, and the theme's colours as Tailwind tokens. No new font
 - [x] Grid, trace screen and ScoreOverlay restyled: a pulse round the canvas on each stroke and after Done, the score counting up with stars popping in as it passes each level, and pages fading in. All of it is off with reduced motion
-- [x] Changed to flat design at Kim's request (Oct 31, 2026): solid colours with no lips, shadows or borders, and buttons that shrink a little while pressed. The home headline is now "See how good your Khmer writing is!"
+- [x] Changed to flat design at Kim's request (Oct 31, 2026): solid colours with no lips, shadows or borders, and buttons that shrink a little while pressed. The home headline became "See how good your Khmer writing is!", then later that day "Help us relight the sky. One letter, one star." at Kim's request, to match the night sky
 - [x] Contrast (a unit test checks every text pair against AA), tap targets and 375 px checked, e2e passing, security checks 1, 2, 4 and 5 logged (Oct 31, 2026)
 - [x] Seen on Kim's phone (Oct 31, 2026)
 - [x] Committed (7943419, 233d68d), /security-review with no findings, live from 233d68d with the live checks logged (Oct 31, 2026)
 
 ### Phase 4: Night sky story and progression
 
-Replanned Oct 31, 2026, at Kim's request, to make progress challenging, exciting and rewarding. Kim picked the night sky story, unlocking in order, and beating your best. The sound effects and letter voices that Phase 4 used to hold moved to Phase 5. The open questions are under Decisions to confirm.
+Replanned Oct 31, 2026, at Kim's request, to make progress challenging, exciting and rewarding. Kim picked the night sky story, unlocking in order, and beating your best. The sound effects and letter voices that Phase 4 used to hold moved to Phase 5. Kim answered its open questions on Oct 31 (see Decisions to confirm): free practice stays open, a letter's forms unlock with it, and the Apsara badge stays.
 
 ```
 Read CLAUDE.md. Turn the app into a night sky story with progression. Don't change the scoring.
@@ -240,14 +240,22 @@ Progress: save each character's best score and stars, for each form, through src
 
 Story: the night sky has gone dark. Every character the learner earns a star on lights a star in the sky, and each set (Numbers, Letters, Subscripts, Both) is a constellation that is complete when all its stars are lit. Write a short opening for a first visit (two or three lines and one button), and a line from the sky after each result. All text goes in src/i18n/en.ts.
 
-Challenge: characters unlock in order within each set. At least one star on a character opens the next one. Locked tiles show a lock and say what opens them. [Free practice: as decided under Decisions to confirm.]
+Challenge: characters unlock in order within each set. At least one star on a character opens the next one. A letter's Subscript and Both forms open with the letter. Locked tiles show a lock and say what opens them. A separate practice view opens any character at any time, without the story's locks.
 
-Reward: show each character's best stars on its tile and on the trace page. Celebrate a new best score ("New best!") and a finished constellation with a short animation. Show the sky on the home page: the constellations, what is lit so far, and the next star to light. Respect prefers-reduced-motion and keep the flat design.
+Reward: show each character's best stars on its tile and on the trace page. Celebrate a new best score ("New best!") and a finished constellation with a short animation. Show the sky on the home page: the constellations, what is lit so far, and the next star to light. When the whole sky is lit, award the Apsara badge, drawn fresh for the app and checked by the reviewer. Respect prefers-reduced-motion and keep the flat design.
 
 Add unit tests for reading stored progress, unlocking and best scores, and e2e tests that progress survives a reload, characters unlock in order, and blocked storage doesn't crash the app.
 ```
 
 Done when progress survives a reload and works in a private window without crashing, characters unlock in order, a new best and a finished constellation are celebrated, the checks pass, and you have played it on your phone.
+
+- [x] Built (Oct 31, 2026): progress saved per character and form through src/lib/progress.ts (checked on read, empty on anything odd, kept in memory when storage is blocked), the opening, the night sky on the home page with a Next star button, best stars on tiles and the trace page, "New best!", a line from the sky after each result, and the Apsara badge for the whole sky
+- [x] Changed the same day at Kim's request: nothing is locked and there is no practice view, so any character can be traced at any time and every result counts. All 108 stars make one constellation, a lotus on water, with no Numbers, Letters, Subscripts or Both labels, and every star lit joins it. Lighting the last one brings the whole lotus in, star by star, with the Apsara badge
+- [x] Changed again the same day at Kim's request: the Subscript form is gone, leaving Letter and Both (the full form), so the sky has 76 stars. The constellation is now a rumduol seen from above, in sections that fill from the middle out: the numbers ring the heart, the letters light the three inner petals and the full forms the three outer petals. Saved results for subscripts are dropped on read
+- [x] Unit tests for reading saved progress, the sky, the next star and best scores; e2e tests for the opening, every character open, a star lighting the sky and surviving a reload, a new best, the finale with and without reduced motion, and blocked, full or corrupt storage
+- [x] Played on Kim's phone over Wi-Fi (Oct 31, 2026)
+- [ ] The Apsara badge and the rumduol constellation checked by the native-speaker reviewer (both drawn fresh for the app, see docs/credits.md)
+- [ ] Committed, /security-review, live, and live checks logged
 
 ### Phase 5: Sound
 
@@ -303,9 +311,10 @@ The biggest risk is not the code. It is letting the app teach a letter shape or 
 | Dark theme outdoors | A dark page is harder to read in bright sunlight, and the faint guide letter on it too | Text contrast is far above AA (white on midnight is 17:1). If testers struggle, the light theme is one more block of the theme's variables |
 | Audio on iPhone | Sound does not play until a tap | Play only from a button tap |
 | Scope creep | Vowels get added before the core loop works (numerals and subscripts joined the MVP on purpose on Oct 30) | Ship the MVP first |
-| Subscripts | Subscripts are small, some look alike (្ដ and ្ត) and some sit beside the letter (្រ, ្ស), so they are hard to trace and to score fairly | The reviewer checks every subscript; tune scoring for small shapes in Phase 3 |
+| Subscripts | Subscripts are small, some look alike (្ដ and ្ត) and some sit beside the letter (្រ, ្ស), so they are hard to trace and to score fairly. Since Oct 31, 2026 they are traced only inside full forms like ក្ក | The reviewer checks every subscript; tune scoring for small shapes in Phase 3 |
 | Hosting limits | GitHub Pages can't send security headers, so nothing stops other sites from framing the app | CSP meta tag now; Cloudflare's proxy adds the headers once there's a custom domain |
 | AI voice quality | The neural voice says a letter name wrongly or unnaturally | The reviewer approves samples first; otherwise record a native speaker |
+| Apsara badge | The hand-drawn apsara (crown, hands, pose) looks wrong or disrespectful to Khmer eyes | The reviewer checks it before it's shared; it's one SVG in src/components/BadgeShelf.tsx, easy to redraw or swap for a lotus |
 
 Decisions to confirm:
 
@@ -318,10 +327,11 @@ Decisions to confirm:
 - [x] Grid: numbers first, then all 33 letters in one block, with a Letter / Subscript / Both toggle; number tiles show the digit 0 to 9 (Oct 30, 2026)
 - [x] Badges for Phase 4: the plan awarded First series and Second series badges, but the grid no longer shows the series. Answered Oct 31, 2026: the night sky story replaces badges with a constellation per set
 - [x] Story and challenge (Oct 31, 2026): a night sky the learner relights, characters that unlock in order, and beating your best score. Kim turned down three rounds per letter (trace, fading guide, from memory) and daily streaks for now
-- [ ] Phase 4, free practice: with unlocking in order, can a learner still open any character, say from a separate practice view, or does it stay locked until earned? Locked-only blocks a learner who came for one letter
-- [ ] Phase 4, forms: does a letter's Subscript and Both unlock with the letter, or does each form have its own path?
-- [ ] Phase 4, the final reward: the plan had an Apsara badge for everything. With the night sky it could be the full sky instead. An Apsara figure is close to the "no national emblems" line, so check it with the reviewer if it stays
-- [ ] Custom domain. **Picked Oct 30, 2026: playaksor.app**, to match the name Aksor. It and playaksor.com were unregistered that day (checked in the registries' RDAP). aksor.app was registered by someone else on Oct 23, 2026, and aksor.com and aksor.org are taken too, so some visitors may type aksor.app and land on another site. Not bought yet: until Kim buys it, anyone can. Earlier shortlist, all unregistered on Oct 30, 2026: aksar.app (អក្សរ, "letters"), tracekhmer.com or .app, kakhako.app ("kâ khâ kô", the Khmer ABC). Backups: rienaksar.com, sorsei.app, aksarkids.app. Buy from an at-cost registrar such as Cloudflare Registrar or Porkbun, and compare renewal prices. Once bought: add public/CNAME, verify the domain in GitHub settings so nobody else can claim it, turn on Enforce HTTPS, and consider Cloudflare's proxy to add the headers GitHub Pages can't send.
+- [x] Phase 4, free practice (Kim, Oct 31, 2026): yes. The story unlocks characters in order, and a separate practice view opens any character at any time, so nobody is blocked from the letter they came for
+- [x] Phase 4, forms (Kim, Oct 31, 2026): a letter's Subscript and Both unlock together with the letter
+- [x] Phase 4, the final reward (Kim, Oct 31, 2026): the Apsara badge stays, for lighting the whole sky. In Kim's words: "Of course it stays, let's celebrate our national culture." Draw the Apsara fresh rather than tracing a photo of a carving or another organisation's emblem, and have the reviewer look at it like every other piece of Khmer content
+- [x] Phase 4, changed (Kim, Oct 31, 2026): no locks and no practice view after all. Every character is open. The Subscript form is dropped, leaving Letter and Both, and all 76 stars join into one rumduol constellation, in sections but with no set names. This replaces the free-practice and forms answers above
+- [x] Custom domain: **playaksor.app, bought by Kim at Porkbun on Oct 30, 2026.** It renews on Oct 30, 2027, so keep auto-renew on. It matches the name Aksor. aksor.app was registered by someone else on Oct 23, 2026, and aksor.com and aksor.org are taken too, so some visitors may type aksor.app and land on another site. Still to do, as a task of its own: verify the domain in GitHub with a TXT record so nobody else can claim it for Pages, point its DNS at GitHub Pages (A and AAAA records for the apex), set it as the Pages custom domain, and turn on Enforce HTTPS. The site deploys through GitHub Actions, so it needs no public/CNAME file. .app works only over HTTPS, so the domain shows a certificate error until GitHub has issued one. Then consider Cloudflare's proxy for the headers GitHub Pages can't send. The earlier shortlist, unregistered on Oct 30, 2026: aksar.app, tracekhmer.com or .app, kakhako.app, rienaksar.com, sorsei.app, aksarkids.app
 
 ## Sources
 

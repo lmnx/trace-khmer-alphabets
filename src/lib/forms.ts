@@ -1,20 +1,21 @@
 import type { Letter } from '../data/letters';
 
-// What a letter tile shows: the letter, its subscript (coeng) form, or the
-// letter with its own subscript under it, like ក្ក.
-export type Form = 'letter' | 'subscript' | 'both';
+// What a letter tile shows: the letter, or its full form, the letter with
+// its own subscript (coeng) under it, like ក្ក. The Subscript form on its own
+// was dropped on 2026-10-31.
+export type Form = 'letter' | 'both';
 
-export const FORMS: readonly Form[] = ['letter', 'subscript', 'both'];
+export const FORMS: readonly Form[] = ['letter', 'both'];
 
 const COENG = String.fromCodePoint(0x17d2);
-// A subscript has no base of its own, so it sits under a dotted circle, the
-// way Khmer dictionaries and keyboards show it.
+// A subscript on its own sits under a dotted circle, the way Khmer
+// dictionaries and keyboards show it. No form shows one now, but guide.ts
+// still draws one correctly, should the Subscript form come back.
 export const DOTTED_CIRCLE = String.fromCodePoint(0x25cc);
 
-// The text for a letter in a form. A letter with no subscript (ឡ) shows alone
-// in Both, and has nothing (null) to show in Subscript.
-export function glyph(letter: Letter, form: Form): string | null {
-  if (form === 'letter') return letter.char;
-  if (!letter.subscript) return form === 'both' ? letter.char : null;
-  return form === 'subscript' ? DOTTED_CIRCLE + COENG + letter.char : letter.char + COENG + letter.char;
+// The text for a letter in a form. ឡ has no subscript, so in Both it shows
+// alone.
+export function glyph(letter: Letter, form: Form): string {
+  if (form === 'letter' || !letter.subscript) return letter.char;
+  return letter.char + COENG + letter.char;
 }

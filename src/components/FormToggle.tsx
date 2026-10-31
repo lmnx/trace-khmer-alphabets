@@ -3,12 +3,12 @@ import { en } from '../i18n/en';
 import { FORMS, glyph, type Form } from '../lib/forms';
 import { showHome } from '../lib/router';
 
-// Letter, Subscript or Both, as radio buttons styled as one segmented control.
+// Letter or Both (the full form), as radio buttons styled as one segmented control.
 // Each option shows ក in that form, so it reads without knowing the words.
 // The chosen one lights up in mint.
 export function FormToggle({ form, fontReady }: { form: Form; fontReady: boolean }) {
   return (
-    <fieldset className="grid grid-cols-3 gap-1 rounded-2xl bg-sunk p-1">
+    <fieldset className="grid grid-cols-2 gap-1 rounded-2xl bg-sunk p-1">
       <legend className="sr-only">{en.grid.formLegend}</legend>
       {FORMS.map((option) => (
         <label

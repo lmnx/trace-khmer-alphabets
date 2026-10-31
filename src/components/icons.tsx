@@ -25,3 +25,6 @@ export const UndoIcon = () => <Icon d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11
 export const ClearIcon = () => <Icon d="M6 6l12 12M18 6L6 18" />;
 export const CheckIcon = () => <Icon d="M5 12.5l4.5 4.5L19 7.5" />;
 export const RetryIcon = () => <Icon d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4" />;
+export const LockIcon = ({ className = 'size-5' }: { className?: string }) => (
+  <Icon d="M8 11V8a4 4 0 0 1 8 0v3M7 11h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z" className={className} />
+);

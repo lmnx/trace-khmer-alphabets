@@ -24,13 +24,19 @@ No other fonts. Latin text uses Kantumruy Pro too.
 
 The Aksor logo, app icon and favicons were drawn for this project on 2026-10-30. They contain no third-party artwork or font outlines. The mark follows Kantumruy Pro's ក (a bar over an arch) but is built from lines and an arc, and the wordmark "aksor" is drawn in single strokes. The shapes are in `src/lib/brand.ts`, and `npm run icons` writes `public/icon.svg`, `public/favicon.svg`, `public/logo.svg` and the PNG icons from them. The small line icons on the buttons (`src/components/icons.tsx`) were also drawn for the project.
 
+## Night sky and Apsara badge
+
+Drawn for this project on 2026-10-31, with no third-party artwork. The night sky's one constellation (`src/components/NightSky.tsx`) is a rumduol, Cambodia's national flower, seen from above and computed in code: a ring of stars at the heart, three small rounded inner petals closing into a dome, and three broad, pointed, slightly curled outer petals, hidden where the inner ones cover them. Its 76 stars are spaced along the visible edges. It was drawn from the flower's general form, not traced from a photo or an emblem. **Still to do:** the reviewer checks that it reads as a rumduol. The stars on the score card and tiles (`src/components/Stars.tsx`) were drawn for the project too.
+
+The Apsara badge (`src/components/BadgeShelf.tsx`) is a celestial dancer in a tiered crown, drawn freehand in SVG in the logo's style: flat shapes and single rounded strokes on a 100 x 100 grid. It was not traced from a photo of a carving, a performance, or any organisation's emblem. **Still to do:** the native-speaker reviewer checks that the figure, its crown, hands and pose are respectful and read as an apsara, like every other piece of Khmer content.
+
 ## Sound effects
 
-None yet. Added in Phase 4.
+None yet. Added in Phase 5.
 
 ## Letter voice clips
 
-None yet. Phase 4 tests an AI Khmer voice. Record the voice, the service, its terms and the reviewer's approval here.
+None yet. Phase 5 tests an AI Khmer voice. Record the voice, the service, its terms and the reviewer's approval here.
 
 ## Review
 

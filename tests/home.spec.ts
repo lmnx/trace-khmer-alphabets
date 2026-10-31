@@ -5,10 +5,13 @@ import { numerals } from '../src/data/numerals';
 import { en } from '../src/i18n/en';
 import { glyph, type Form } from '../src/lib/forms';
 import { homeHref, numberHref, traceHref } from '../src/lib/router';
-import { expect, test } from './fixtures';
+import { expect, seedProgress, test, WELCOMED } from './fixtures';
 
 const section = (page: Page, heading: string) => page.getByRole('region', { name: heading });
 const hash = (page: Page) => new URL(page.url()).hash;
+
+// A returning learner, so the home page shows the sky and the grid, not the opening.
+test.beforeEach(({ page }) => seedProgress(page, WELCOMED));
 
 async function pickForm(page: Page, form: Form) {
   await page.locator('fieldset label', { hasText: en.grid.forms[form] }).tap();
@@ -33,10 +36,9 @@ test('home page shows the title, numbers and letters in Kantumruy Pro', async ({
   expect(loadedKhmerFaces).toBe(1);
 });
 
-test('the grid shows ០ to ៩, then all 33 letters in one block, in order', async ({ page }) => {
+test('the grid shows ០ to ៩, then all 33 letters in one block, in order, all open', async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByRole('region')).toHaveCount(2);
-  await expect(page.getByRole('main').getByRole('link')).toHaveCount(43);
+  await expect(page.getByRole('region')).toHaveCount(3);
 
   const numberTiles = section(page, en.grid.numbers).getByRole('link');
   await expect(numberTiles).toHaveCount(10);
@@ -57,31 +59,25 @@ test('the grid shows ០ to ៩, then all 33 letters in one block, in order', as
   }
 });
 
-test('the toggle shows the letters as subscripts or stacked, and ឡ sits out of Subscript', async ({ page }) => {
+test('the toggle shows the letters in their full form, with ឡ alone', async ({ page }) => {
   await page.goto('./');
   await expect(page.getByRole('radio', { name: en.grid.forms.letter })).toBeChecked();
+  // Letter and Both only: the Subscript form was dropped.
+  await expect(page.getByRole('radio')).toHaveCount(2);
   const historyLength = await page.evaluate(() => history.length);
   const items = section(page, en.grid.letters).getByRole('listitem');
 
-  for (const [form, links] of [['subscript', 32], ['both', 33]] as const) {
-    await pickForm(page, form);
-    expect(hash(page)).toBe(homeHref(form));
-    await expect(section(page, en.grid.letters).getByRole('link')).toHaveCount(links);
-    for (const [i, letter] of letters.entries()) {
-      const item = items.nth(i);
-      const text = glyph(letter, form);
-      if (text === null) {
-        await expect(item.getByRole('link')).toHaveCount(0);
-        await expect(item).toContainText(en.grid.noSubscript);
-        await expect(item.locator('[lang="km"]')).toHaveText(letter.char);
-      } else {
-        await expect(item.getByRole('link')).toHaveAttribute('href', traceHref(letter.order, form));
-        await expect(item.locator('[lang="km"]')).toHaveText(text);
-      }
-    }
-    // The numbers don't change with the toggle.
-    await expect(section(page, en.grid.numbers).getByRole('link')).toHaveCount(10);
+  await pickForm(page, 'both');
+  expect(hash(page)).toBe(homeHref('both'));
+  await expect(section(page, en.grid.letters).getByRole('link')).toHaveCount(33);
+  for (const [i, letter] of letters.entries()) {
+    const item = items.nth(i);
+    await expect(item.getByRole('link')).toHaveAttribute('href', traceHref(letter.order, 'both'));
+    await expect(item.locator('[lang="km"]')).toHaveText(glyph(letter, 'both'));
   }
+  await expect(items.nth(31).locator('[lang="km"]')).toHaveText('ឡ');
+  // The numbers don't change with the toggle.
+  await expect(section(page, en.grid.numbers).getByRole('link')).toHaveCount(10);
 
   await pickForm(page, 'letter');
   expect(hash(page)).toBe(homeHref('letter'));
@@ -89,7 +85,7 @@ test('the toggle shows the letters as subscripts or stacked, and ឡ sits out of
   expect(await page.evaluate(() => history.length)).toBe(historyLength);
 });
 
-test('tiles and toggle are big enough to tap on narrow phones, with no sideways scroll', async ({ page }) => {
+test('tiles, buttons and the toggle are big enough to tap on narrow phones, with no sideways scroll', async ({ page }) => {
   for (const width of [320, 375]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('./');
@@ -102,25 +98,28 @@ test('tiles and toggle are big enough to tap on narrow phones, with no sideways 
       }),
     );
     expect(Math.min(...sizes), `smallest tile at ${width} px`).toBeGreaterThanOrEqual(64);
-    const toggleHeights = await page.locator('fieldset label').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
-    expect(Math.min(...toggleHeights), `shortest toggle option at ${width} px`).toBeGreaterThanOrEqual(48);
+    // To the nearest 0.01 px: while the page slides in, a box's edges can sit
+    // between pixels and its height come out a hair under.
+    const targets = page.getByRole('main').locator('a, button, fieldset label');
+    const heights = await targets.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height * 100) / 100));
+    expect(Math.min(...heights), `shortest tap target at ${width} px`).toBeGreaterThanOrEqual(48);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   }
 });
 
 test('tapping a tile opens it on the trace page, and the back link keeps the form', async ({ page }) => {
   await page.goto('./');
-  await page.locator(`a[href="${numberHref(0)}"]`).tap();
+  await page.locator(`ul a[href="${numberHref(0)}"]`).tap();
   await expect(page.getByRole('heading', { name: en.trace.number(0) })).toBeVisible();
   expect(hash(page)).toBe(numberHref(0));
 
   await page.goto('./');
   const last = letters[letters.length - 1];
-  await page.locator(`a[href="${traceHref(last.order)}"]`).tap();
+  await page.locator(`ul a[href="${traceHref(last.order)}"]`).tap();
   await expect(page.getByRole('heading', { name: en.trace.letter(last.order) })).toBeVisible();
 
   await page.goto(`./${homeHref('both')}`);
-  await page.locator(`a[href="${traceHref(1, 'both')}"]`).tap();
+  await page.locator(`ul a[href="${traceHref(1, 'both')}"]`).tap();
   await expect(page.getByRole('heading', { name: en.trace.both(1) })).toBeVisible();
   await page.getByRole('link', { name: en.nav.allLetters }).tap();
   expect(hash(page)).toBe(homeHref('both'));
@@ -129,7 +128,7 @@ test('tapping a tile opens it on the trace page, and the back link keeps the for
   // ឡ has no subscript, so in Both it opens as the letter alone.
   const la = letters.find((letter) => !letter.subscript);
   if (!la) throw new Error('expected a letter with no subscript');
-  await page.locator(`a[href="${traceHref(la.order, 'both')}"]`).tap();
+  await page.locator(`ul a[href="${traceHref(la.order, 'both')}"]`).tap();
   await expect(page.getByRole('heading', { name: en.trace.letter(la.order) })).toBeVisible();
   await page.getByRole('link', { name: en.nav.allLetters }).tap();
   expect(hash(page)).toBe(homeHref('both'));

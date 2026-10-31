@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { fitGlyph, STROKE_EM, SUBSCRIPT_STROKE_EM, templateStrokeWidth } from '../src/lib/guide';
-import { numberHref, traceHref } from '../src/lib/router';
-import { neighbours, targetText } from '../src/lib/targets';
+import type { Form } from '../src/lib/forms';
+import { neighbours, SETS, setOf, targetKey, targetText } from '../src/lib/targets';
+
+const letter = (order: number, form: Form = 'letter') => ({ kind: 'letter', order, form }) as const;
+const number = (digit: number) => ({ kind: 'number', digit }) as const;
 
 describe('fitGlyph', () => {
   it('scales the ink to fill 80% of the square and centres it', () => {
@@ -41,24 +44,45 @@ describe('targetText', () => {
     expect(targetText({ kind: 'letter', order: 1, form: 'letter' })).toBe('ក');
     expect(targetText({ kind: 'letter', order: 1, form: 'both' })).toBe(`ក${coeng}ក`);
     expect(targetText({ kind: 'letter', order: 32, form: 'both' })).toBe('ឡ');
+    expect(targetText({ kind: 'letter', order: 33, form: 'both' })).toBe(`អ${coeng}អ`);
     expect(targetText({ kind: 'number', digit: 5 })).toBe('៥');
   });
 });
 
 describe('neighbours', () => {
   it('steps through the letters, with nothing before the first or after the last', () => {
-    expect(neighbours({ kind: 'letter', order: 1, form: 'letter' })).toEqual({ previous: null, next: traceHref(2) });
-    expect(neighbours({ kind: 'letter', order: 33, form: 'letter' })).toEqual({ previous: traceHref(32), next: null });
+    expect(neighbours(letter(1))).toEqual({ previous: null, next: letter(2) });
+    expect(neighbours(letter(33))).toEqual({ previous: letter(32), next: null });
   });
 
-  it('stays in the same form, skipping ឡ only in Subscript', () => {
-    expect(neighbours({ kind: 'letter', order: 31, form: 'subscript' }).next).toBe(traceHref(33, 'subscript'));
-    expect(neighbours({ kind: 'letter', order: 33, form: 'subscript' }).previous).toBe(traceHref(31, 'subscript'));
-    expect(neighbours({ kind: 'letter', order: 31, form: 'both' }).next).toBe(traceHref(32, 'both'));
+  it('stays in the same form, ឡ included in Both', () => {
+    expect(neighbours(letter(31, 'both')).next).toEqual(letter(32, 'both'));
+    expect(neighbours(letter(33, 'both'))).toEqual({ previous: letter(32, 'both'), next: null });
   });
 
   it('steps through the numbers 0 to 9', () => {
-    expect(neighbours({ kind: 'number', digit: 0 })).toEqual({ previous: null, next: numberHref(1) });
-    expect(neighbours({ kind: 'number', digit: 9 })).toEqual({ previous: numberHref(8), next: null });
+    expect(neighbours(number(0))).toEqual({ previous: null, next: number(1) });
+    expect(neighbours(number(9))).toEqual({ previous: number(8), next: null });
+  });
+});
+
+describe('SETS', () => {
+  it('has the numbers, the letters and their full forms, 76 characters, each with its own key', () => {
+    expect(SETS.map((set) => [set.name, set.targets.length])).toEqual([
+      ['numbers', 10],
+      ['letters', 33],
+      ['both', 33],
+    ]);
+    const keys = SETS.flatMap((set) => set.targets.map(targetKey));
+    expect(new Set(keys).size).toBe(76);
+    expect(keys).toContain('number/0');
+    expect(keys).toContain('both/32');
+    expect(keys.some((key) => key.startsWith('subscript/'))).toBe(false);
+  });
+
+  it('puts each target in its own set', () => {
+    expect(setOf(number(3)).name).toBe('numbers');
+    expect(setOf(letter(3)).name).toBe('letters');
+    expect(setOf(letter(3, 'both')).name).toBe('both');
   });
 });

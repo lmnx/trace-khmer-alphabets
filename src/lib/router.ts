@@ -4,8 +4,8 @@ import type { Form } from './forms';
 
 // Hash routes, because GitHub Pages can't send every path to index.html.
 // The hash is user input, so only exact known shapes are accepted:
-//   #/  #/subscript  #/both                      home, showing that form
-//   #/trace/1  #/trace/1/subscript  #/trace/1/both  a letter in a form
+//   #/  #/both                     home, showing that form
+//   #/trace/1  #/trace/1/both      a letter, or its full form
 //   #/trace/number/0 to #/trace/number/9          a numeral
 
 export type TraceTarget = { kind: 'letter'; order: number; form: Form } | { kind: 'number'; digit: number };
@@ -15,22 +15,17 @@ export type Route = { name: 'home'; form: Form } | { name: 'trace'; target: Trac
 const HOME: Route = { name: 'home', form: 'letter' };
 
 function toForm(suffix: string | undefined): Form {
-  return suffix === 'subscript' || suffix === 'both' ? suffix : 'letter';
+  return suffix === 'both' ? suffix : 'letter';
 }
 
 export function parseHash(hash: string): Route {
-  const home = /^#\/(subscript|both)$/.exec(hash);
+  const home = /^#\/(both)$/.exec(hash);
   if (home) return { name: 'home', form: toForm(home[1]) };
 
-  const letter = /^#\/trace\/([1-9]\d?)(?:\/(subscript|both))?$/.exec(hash);
+  const letter = /^#\/trace\/([1-9]\d?)(?:\/(both))?$/.exec(hash);
   if (letter) {
     const order = Number(letter[1]);
-    const form = toForm(letter[2]);
-    const known = letters[order - 1];
-    // ឡ has no subscript, so it has no subscript page.
-    if (known && (form !== 'subscript' || known.subscript)) {
-      return { name: 'trace', target: { kind: 'letter', order, form } };
-    }
+    if (letters[order - 1]) return { name: 'trace', target: { kind: 'letter', order, form: toForm(letter[2]) } };
   }
 
   const number = /^#\/trace\/number\/(\d)$/.exec(hash);

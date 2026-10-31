@@ -1,16 +1,30 @@
 import { ChevronLeft, ChevronRight, GridIcon } from '../components/icons';
 import { AppIcon } from '../components/Logo';
+import { StarPips } from '../components/Stars';
 import { FOCUS } from '../components/styles';
 import { TraceCanvas } from '../components/TraceCanvas';
 import { letters } from '../data/letters';
 import { en } from '../i18n/en';
+import { getProgress, recordResult, useProgress } from '../lib/progress';
 import { homeHref, targetHref, type TraceTarget } from '../lib/router';
+import type { TraceScore } from '../lib/scoring';
+import { bestOf, resultStory, type ResultStory } from '../lib/sky';
 import { neighbours, targetText } from '../lib/targets';
 
+// The trace page. Every result is saved, keeping the character's best, and
+// its first star lights the character's star in the night sky.
 export function Trace({ target }: { target: TraceTarget }) {
   // Back to the grid in the form this letter was opened from.
   const back = homeHref(target.kind === 'letter' ? target.form : 'letter');
   const { previous, next } = neighbours(target);
+  const nextHref = next ? targetHref(next) : null;
+
+  function onScore(result: TraceScore): ResultStory {
+    const before = getProgress();
+    recordResult(target, result.score, result.stars);
+    return resultStory(before, getProgress(), target);
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col items-center gap-3 pt-4 pr-[max(1rem,env(safe-area-inset-right))] pb-[max(1.5rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] motion-safe:animate-enter">
       <nav className="flex w-full items-center justify-between">
@@ -24,12 +38,15 @@ export function Trace({ target }: { target: TraceTarget }) {
         <AppIcon className="size-10" />
       </nav>
       <div className="flex w-full items-center justify-between gap-2">
-        <StepLink href={previous} label={en.trace.previous} direction="previous" />
-        <h1 className="text-center text-xl font-bold text-fg">{heading(target)}</h1>
-        <StepLink href={next} label={en.trace.next} direction="next" />
+        <StepLink href={previous ? targetHref(previous) : null} label={en.trace.previous} direction="previous" />
+        <div className="flex flex-col items-center gap-0.5">
+          <h1 className="text-center text-xl font-bold text-fg">{heading(target)}</h1>
+          <BestLine target={target} />
+        </div>
+        <StepLink href={nextHref} label={en.trace.next} direction="next" />
       </div>
       {/* Keyed by the target, so moving to another character starts with no strokes. */}
-      <TraceCanvas key={targetHref(target)} text={targetText(target)} />
+      <TraceCanvas key={targetHref(target)} text={targetText(target)} onScore={onScore} next={nextHref} />
     </main>
   );
 }
@@ -39,6 +56,17 @@ function heading(target: TraceTarget): string {
   // ឡ opened from Both is the letter alone, since it has no subscript.
   const form = target.form === 'both' && !letters[target.order - 1].subscript ? 'letter' : target.form;
   return en.trace[form](target.order);
+}
+
+// Under the heading: the character's best stars and score so far.
+function BestLine({ target }: { target: TraceTarget }) {
+  const best = bestOf(useProgress(), target);
+  return (
+    <p className="flex items-center gap-1.5 text-sm text-fg-muted">
+      <StarPips count={best?.stars ?? 0} />
+      {best ? en.trace.best(best.score) : en.trace.notYet}
+    </p>
+  );
 }
 
 // A round arrow to the previous or next character in the same set. At either

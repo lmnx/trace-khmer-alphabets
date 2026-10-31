@@ -40,6 +40,8 @@ describe('theme', () => {
     ['fg-muted', 'sunk'],
     // ឡ's "none" tile, which sits on the page with no surface.
     ['fg-faint', 'page'],
+    // The night sky's "The whole sky is lit!".
+    ['star', 'sunk'],
     ['star', 'surface'],
     ['star', 'surface-hover'],
     // The home page's headline.

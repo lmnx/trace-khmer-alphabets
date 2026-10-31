@@ -10,17 +10,15 @@ const byChar = (char: string) => {
 };
 
 describe('glyph', () => {
-  it('shows a letter, its subscript under a dotted circle, or both stacked', () => {
+  it('shows a letter, or its full form with its subscript stacked under it', () => {
     const ka = byChar('ក');
     expect(glyph(ka, 'letter')).toBe('ក');
-    expect(glyph(ka, 'subscript')).toBe('\u25CC\u17D2ក');
     expect(glyph(ka, 'both')).toBe('ក\u17D2ក');
   });
 
-  it('shows ឡ alone in Both and nothing in Subscript, since it has no subscript', () => {
+  it('shows ឡ alone in Both, since it has no subscript', () => {
     const la = byChar('ឡ');
     expect(glyph(la, 'letter')).toBe('ឡ');
-    expect(glyph(la, 'subscript')).toBeNull();
     expect(glyph(la, 'both')).toBe('ឡ');
   });
 });

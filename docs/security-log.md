@@ -2,6 +2,26 @@
 
 The security checks from CLAUDE.md, run at the end of every phase and before sharing a link. Newest first. Each entry records the date, the results, any fixes, and every loosening of the CSP with its reason.
 
+## 2026-10-31 · Phase 4 (Night sky story and progression)
+
+Run before committing. Check 3 runs after the commit and before the push, and checks 4 and 5 need repeating on the live site after the push. These ran against the local production build.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | `npm audit --omit=dev` | 0 vulnerabilities. Full `npm audit`, dev included: 0. `npm audit signatures`: 88 packages have verified attestations. `npm install-scripts ls`: no packages with unreviewed install scripts. No dependency changes this phase. |
+| 2 | `npm outdated`, Dependabot PRs | `typescript` 7.0.2 is still held. `eslint` 10.14.0 (dev only, published 2026-10-30) still waits for Dependabot's 7-day cooldown. Open Dependabot PRs couldn't be listed here, because `gh` isn't installed: Kim to check on GitHub. |
+| 3 | `/security-review` | Not yet: after the commit, before the push. |
+| 4 | CSP meta tag, no violations | The CSP and referrer tags are unchanged. `npm run e2e` passed in one clean run: 57 passed, 1 skipped (the Chromium-only touch test on WebKit), with no CSP violations, console errors or requests to other origins, on Android Chrome and iPhone Safari emulation, with motion on and reduced. Earlier runs that day lost tests to frozen browsers while the machine was swapping hard (12.9 of 13.3 GB swap used); none failed an assertion on a page that responded. The new motion is CSS classes behind `motion-safe:` and `element.animate()` (Web Animations), which `style-src 'self'` allows. No component sets a `style` attribute. |
+| 5 | Every request to the site's own origin | e2e fails on any request to another origin and passed. No new files are fetched: the sky, the stars and the Apsara badge are inline SVG in the bundle. |
+
+Review notes:
+- Phone check: Kim played the final version on a phone over Wi-Fi (`npm run dev -- --host`) before approving the commit. That also served the app to Kim's Tailscale devices while it ran.
+- Saved progress is the first thing the app reads back from the browser, so it is treated as untrusted. `src/lib/progress.ts` is still the only module that touches localStorage (ESLint enforces it). Every call is in try/catch, including reading `window.localStorage` itself, which throws when storage is blocked. What comes back must be version 1 JSON. Each entry is kept only if its key is one of the 108 known characters (so `__proto__`, `constructor` and the like never get through) and its score is an integer from 0 to 100 and its stars 0 to 3. Anything else reads as empty progress. A `storage` event from another tab is read and checked the same way. Unit tests cover each case, and e2e tests run the app with storage blocked, with saving failing, and with corrupt saved data.
+- What is saved: whether the opening was seen, and each character's best score and stars. No names, no IDs, no timestamps, and nothing leaves the device.
+- Routes: a practice view with its own `#/practice` routes was built, then removed the same day at Kim's request. The Subscript form went too, so `#/subscript` and `#/trace/:order/subscript` are gone. The router sends all of these home, and unit tests cover them. Saved results for subscripts no longer match a known character, so they are dropped on read like any unknown key. No HTML injection sinks anywhere in `src/`.
+- ESLint now lets the e2e tests (`tests/*.spec.ts`, `tests/fixtures.ts`) use localStorage, to seed and read progress in the test browser. They aren't part of the app.
+- The Apsara badge and the rumduol constellation are drawn for the project (docs/credits.md). The reviewer still has to check both.
+
 ## 2026-10-31 · Phase 3.5 live
 
 Deployed from commit 233d68d (Kim pushed it). Checks 1 to 3 are in the entry below, run before the push.

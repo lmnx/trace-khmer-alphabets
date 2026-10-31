@@ -59,7 +59,9 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/lib/progress.ts'],
+    // progress.ts owns storage. The e2e tests seed and read the browser's
+    // storage, which runs in the page, not in the app.
+    files: ['src/lib/progress.ts', 'tests/**/*.spec.ts', 'tests/fixtures.ts'],
     rules: {
       'no-restricted-globals': 'off',
       'no-restricted-properties': 'off',

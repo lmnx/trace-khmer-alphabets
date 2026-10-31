@@ -1,4 +1,5 @@
-import { expect, test as base } from '@playwright/test';
+import { expect, test as base, type Page } from '@playwright/test';
+import { serializeProgress, STORAGE_KEY, type Progress } from '../src/lib/progress';
 
 // Every test fails on a CSP violation, a console error, an uncaught
 // exception or a request to another origin.
@@ -32,3 +33,17 @@ export const test = base.extend<{ siteGuard: void }>({
 });
 
 export { expect };
+
+// Progress from an earlier visit, saved before the app loads. Only when nothing
+// is saved yet, so a reload keeps whatever the app has saved since.
+export async function seedProgress(page: Page, progress: Progress) {
+  await page.addInitScript(
+    ([key, value]) => {
+      if (window.localStorage.getItem(key) === null) window.localStorage.setItem(key, value);
+    },
+    [STORAGE_KEY, serializeProgress(progress)] as const,
+  );
+}
+
+// A returning learner who has seen the opening, with no stars yet.
+export const WELCOMED: Progress = { welcomed: true, best: {} };
