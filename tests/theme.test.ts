@@ -42,6 +42,8 @@ describe('theme', () => {
     ['fg-faint', 'page'],
     // The night sky's "The whole sky is lit!".
     ['star', 'sunk'],
+    // The side of the form switch that is on.
+    ['mint', 'sunk'],
     ['star', 'surface'],
     ['star', 'surface-hover'],
     // The home page's headline.

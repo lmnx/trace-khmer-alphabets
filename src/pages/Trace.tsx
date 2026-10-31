@@ -5,11 +5,12 @@ import { FOCUS } from '../components/styles';
 import { TraceCanvas } from '../components/TraceCanvas';
 import { letters } from '../data/letters';
 import { en } from '../i18n/en';
+import { markFreshStar, markFreshTile } from '../lib/fresh';
 import { getProgress, recordResult, useProgress } from '../lib/progress';
 import { homeHref, targetHref, type TraceTarget } from '../lib/router';
 import type { TraceScore } from '../lib/scoring';
-import { bestOf, resultStory, type ResultStory } from '../lib/sky';
-import { neighbours, targetText } from '../lib/targets';
+import { bestOf, resultStory, starsOf, type ResultStory } from '../lib/sky';
+import { neighbours, targetKey, targetText } from '../lib/targets';
 
 // The trace page. Every result is saved, keeping the character's best, and
 // its first star lights the character's star in the night sky.
@@ -19,10 +20,16 @@ export function Trace({ target }: { target: TraceTarget }) {
   const { previous, next } = neighbours(target);
   const nextHref = next ? targetHref(next) : null;
 
+  // Saves the result, and notes what it earned for the home page to show off:
+  // a newly lit star in the sky, and a tile whose stars went up.
   function onScore(result: TraceScore): ResultStory {
     const before = getProgress();
     recordResult(target, result.score, result.stars);
-    return resultStory(before, getProgress(), target);
+    const after = getProgress();
+    const story = resultStory(before, after, target);
+    if (story.litNow) markFreshStar(story.star);
+    if (starsOf(after, target) > starsOf(before, target)) markFreshTile(targetKey(target));
+    return story;
   }
 
   return (

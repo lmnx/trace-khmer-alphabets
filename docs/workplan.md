@@ -257,6 +257,14 @@ Done when progress survives a reload and works in a private window without crash
 - [ ] The Apsara badge and the rumduol constellation checked by the native-speaker reviewer (both drawn fresh for the app, see docs/credits.md)
 - [x] Committed (87577d2, 3a2e177), /security-review with no findings, live from 3a2e177 with the live checks logged (Oct 31, 2026)
 
+Follow-up at Kim's request (Oct 31, 2026), after Phase 4 went live:
+
+- [x] A consonant's two forms share one star: either the base consonant or the consonant + subscript lights it. The sky has 43 stars, the rumduol fills from the heart (numbers) through the inner petals (consonants 1 to 12) to the outer petals (13 to 33), and its lines follow the petal curves
+- [x] The Letter / Both tabs became one switch, "Base consonant" and "Consonant + subscript", and the trace headings say "Consonant 1" and "Consonant 1 + subscript"
+- [x] Tiered badges: first medals (bronze, silver, gold, apsara), then at Kim's request a growing-flower ladder with solid icons, picked from three styles: the seed for all 10 numbers, the bud for any 22 characters, the rumduol in bloom for all 43, and the apsara in a crown of flowers for three stars on all 43. Each badge states its exact count. Not-yet-earned badges are dashed outlines on the home page
+- [x] More visual pops: sparks from the score on three stars or a new best, a newly lit star popping into the rumduol on the result card and again on the home sky, a tile's stars popping when they go up, and a new badge dropping in with sparks round it. All skipped with reduced motion
+- [ ] Checks, phone check, commit and push
+
 ### Phase 5: Sound
 
 Moved here from Phase 4 on Oct 31, 2026.
@@ -314,7 +322,7 @@ The biggest risk is not the code. It is letting the app teach a letter shape or 
 | Subscripts | Subscripts are small, some look alike (្ដ and ្ត) and some sit beside the letter (្រ, ្ស), so they are hard to trace and to score fairly. Since Oct 31, 2026 they are traced only inside full forms like ក្ក | The reviewer checks every subscript; tune scoring for small shapes in Phase 3 |
 | Hosting limits | GitHub Pages can't send security headers, so nothing stops other sites from framing the app | CSP meta tag now; Cloudflare's proxy adds the headers once there's a custom domain |
 | AI voice quality | The neural voice says a letter name wrongly or unnaturally | The reviewer approves samples first; otherwise record a native speaker |
-| Apsara badge | The hand-drawn apsara (crown, hands, pose) looks wrong or disrespectful to Khmer eyes | The reviewer checks it before it's shared; it's one SVG in src/components/BadgeShelf.tsx, easy to redraw or swap for a lotus |
+| Apsara badge | The hand-drawn apsara bust (crown, hand, earrings) looks wrong or disrespectful to Khmer eyes | The reviewer checks it before it's shared; it's a few shapes in src/components/BadgeShelf.tsx, easy to redraw or swap |
 
 Decisions to confirm:
 

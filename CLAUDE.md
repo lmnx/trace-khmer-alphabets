@@ -10,6 +10,7 @@ A phone-first web app where learners trace the Khmer numerals and the 33 consona
 - Phase 3.5 (Brand and makeover), added 2026-10-30 at Kim's request: the Aksor name, logo and dark "Star path" theme, and a game-like restyle of the grid, trace screen and score, visual only. Made flat on 2026-10-31 at Kim's request, with the headline "See how good your Khmer writing is!" (since replaced by "Help us relight the sky. One letter, one star.", Kim's call on 2026-10-31). Kim checked it on a phone. Live 2026-10-31 from 233d68d, with the security checks and live-site checks logged. Phase 3.5 done 2026-10-31.
 - Replanned 2026-10-31: Phase 4 is now the night sky story and progression (unlock in order, beat your best, a constellation per set), Phase 5 is sound, Phase 6 is polish and ship. Phase 4's open questions are in docs/workplan.md.
 - Phase 4 (Night sky story and progression) built 2026-10-31: saved progress, the opening, the night sky, best stars, "New best!" and the Apsara finale. Changed twice the same day at Kim's request: no locks and no practice view; then the Subscript form dropped, leaving Letter and Both (the full form), and the sky became one rumduol flower of 76 stars in sections (numbers at the heart, letters on the inner petals, full forms on the outer), with no set names. Kim played it on a phone. Live 2026-10-31 from 3a2e177 (CI run 41185777820), with the security checks and live-site checks logged. Phase 4 done 2026-10-31. Still to do: the native-speaker reviewer checks the Apsara badge and the rumduol.
+- Phase 4 follow-up, 2026-10-31 at Kim's request (built locally, not committed): a consonant's two forms share one star, so the sky has 43 (10 numbers, 33 consonants); the Letter / Both tabs became a switch labelled "Base consonant" and "Consonant + subscript". Then tiered badges, now named for a growing flower (seed, bud, rumduol, apsara) with solid icons Kim picked, and more visual pops. Checks pass locally; Kim's phone check, the commit and the push are next.
 - TypeScript is held at 6.0.x because typescript-eslint 8.72 supports TypeScript below 6.1. Dependabot ignores TypeScript 6.1 and later until that changes.
 - Decided 2026-10-30: hosting on GitHub Pages (custom domain later), Kantumruy Pro font, sound effects for the MVP, AI letter voices tested in Phase 4 (Phase 5 since 2026-10-31).
 - Decided 2026-10-30: the app is called Aksor (អក្សរ, "letters"), with "Trace the Khmer Alphabet" as the tagline. The domain is playaksor.app (aksor.app is someone else's), bought by Kim at Porkbun on 2026-10-30. It doesn't point at the site yet.
@@ -34,20 +35,21 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 - src/data/letters.ts: generated from letters.csv by `npm run letters`. Never edit by hand.
 - scripts/: the letters.ts generator. letters-csv.ts checks every CSV row and renders the module.
 - src/data/numerals.ts: ០ to ៩, computed from their code points. They are labelled with the digits 0 to 9, so they need no CSV.
-- src/lib/forms.ts: the Letter and Both forms and `glyph()`, the text each form shows.
+- src/lib/forms.ts: the two forms, `letter` (the base consonant) and `both` (the consonant + subscript), and `glyph()`, the text each form shows.
 - src/lib/targets.ts: the text to trace for a route, the four sets (`SETS`), each target's key in saved progress, and Previous / Next within its set.
 - src/lib/guide.ts: lays out and draws the guide glyph in a square, and gives the template's stroke width.
 - src/lib/ink.ts: the brush and `strokePath()`, which turns a stroke's points into a perfect-freehand outline.
 - src/lib/scoring.ts: pure scoring functions, no DOM access.
 - src/lib/masks.ts: draws the 256 x 256 masks and stroke paths that scoring.ts compares.
 - src/lib/progress.ts: the only module that touches localStorage. Reads and checks saved progress, keeps it in memory, and shares it with React through `useProgress()`.
-- src/lib/sky.ts: the night sky story as pure functions: the sky's 76 stars in order (`SKY`), what is lit, the next star to suggest, and what a result means (`resultStory()`).
+- src/lib/fresh.ts: what the learner just earned (a newly lit star, a tile whose stars went up), kept in memory for a few seconds so the home page can pop them.
+- src/lib/sky.ts: the night sky story as pure functions: the sky's 43 stars in order (`SKY`, one per number and consonant), what is lit, the next star to suggest, and what a result means (`resultStory()`).
 - src/lib/audio.ts: the only module that plays sound.
 - src/lib/brand.ts: the logo's shapes, for the Logo component and scripts/icons.ts.
 - src/lib/theme.ts: `canvasColors()`, the theme's colours for the canvas.
-- src/lib/motion.ts: `prefersReducedMotion()`, `pulse()`, `sparkle()` and `useCountUp()`, the motion done in JavaScript.
+- src/lib/motion.ts: `prefersReducedMotion()`, `pulse()`, `sparkle()`, `popIn()`, `burst()` and `useCountUp()`, the motion done in JavaScript.
 - src/i18n/en.ts: all UI text. km.ts comes later with the Khmer toggle.
-- src/components/: LetterGrid, FormToggle, TraceCanvas, ScoreOverlay, NightSky (and the rumduol Constellation), Opening, BadgeShelf (and the ApsaraBadge), Logo (AppIcon and Wordmark), KhmerText, Stars (StarPips), icons.tsx (line icons) and styles.ts (shared button classes).
+- src/components/: LetterGrid, FormToggle (the base consonant / consonant + subscript switch), TraceCanvas, ScoreOverlay, NightSky (and the rumduol Constellation), Opening, BadgeShelf (and the TierIcon for each tier), Logo (AppIcon and Wordmark), KhmerText, Stars (StarPips), icons.tsx (line icons) and styles.ts (shared button classes).
 - public/: icon.svg, favicon.svg, logo.svg and the PNG icons, written by `npm run icons`, and manifest.webmanifest.
 - public/fonts/: self-hosted Kantumruy Pro (woff2).
 - public/audio/sfx/: sound effects. public/audio/letters/<order>-<name>.mp3: letter names (Phase 5).
@@ -57,7 +59,7 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 ## Khmer text rules
 - Render Khmer only with the self-hosted Kantumruy Pro, never a system fallback. Await document.fonts.load() before drawing a guide letter or a scoring mask.
 - Show the letter itself everywhere. Names repeat (two "tha", two "tho").
-- Letters show alone or in their full form, stacked with their own subscript like ក្ក (Both). Build both with `glyph()` in src/lib/forms.ts. ឡ has no subscript: the CSV's subscript column says no, so in Both it shows alone. The Subscript form on its own (◌្ក) was dropped on 2026-10-31.
+- Consonants show as the base consonant or as the consonant + subscript, stacked with its own subscript like ក្ក (the `both` form). Use those two names in the UI, not "letter" and "both". Build both with `glyph()` in src/lib/forms.ts. ឡ has no subscript: the CSV's subscript column says no, so in Both it shows alone. The Subscript form on its own (◌្ក) was dropped on 2026-10-31.
 - Never hard-code romanizations outside letters.csv.
 - Never put user-facing text inline in components. It goes in src/i18n/en.ts, so adding the Khmer toggle needs no refactor.
 
@@ -74,18 +76,20 @@ Hosted on GitHub Pages. .github/workflows/deploy.yml runs the checks and deploys
 - The ink is as wide as the template's own strokes: STROKE_EM (0.07, measured for Kantumruy Pro; 0.06 for a subscript on its own) times the guide's font size, with no thinning. Scoring uses the same `layoutGlyph()`, `templateStrokeWidth()` and `strokePath()`, so the mask lines up with what the learner sees.
 
 ## Night sky story
-- Every character, in every form, is a star in one constellation of 76: a rumduol, Cambodia's national flower, seen from above, drawn in src/components/NightSky.tsx. A character's star lights once it has at least one star. The sky shows no set names.
-- Each set has its own part of the flower, filling from the middle out: the 10 numbers ring the heart, the 33 letters light the three inner petals (11 each), and the 33 full forms light the three outer petals.
+- Each number and each consonant is a star in one constellation of 43: a rumduol, Cambodia's national flower, seen from above, drawn in src/components/NightSky.tsx. A consonant's star lights once either form, base or + subscript, has at least one star (Kim, 2026-10-31). The sky shows no set names.
+- The flower fills from the middle out: the 10 numbers ring the heart, consonants 1 to 12 light the three inner petals (four each), and 13 to 33 the three outer petals (seven each). Lines follow the petal outlines between stars.
+- Each form keeps its own best score and stars: tiles and the trace page show that form's best, and only the sky shares them.
 - Nothing is locked (Kim, 2026-10-31): every character is open, every result is saved, and the sky only suggests a next star, the first one in `SKY` order with no star yet.
 - Saved progress is `aksor:progress` in localStorage: `{ v: 1, welcomed, best: { "letter/1": { score, stars } } }`, keyed by `targetKey()`. A change of shape needs a new `v` and a migration, or learners lose their sky.
-- Lighting the whole sky awards the Apsara badge, drawn for the app (docs/credits.md). The reviewer checks it like all Khmer content.
+- Badges come in four tiers that grow like a flower (Kim, 2026-10-31): the seed for all 10 numbers, the bud for any 22 characters, the rumduol in bloom for all 43, and the apsara, in a crown of flowers, for three stars on all 43 (either form of a consonant counts). The counts live in `TIER_GOALS` and the rules in `hasTier()` in src/lib/sky.ts, and the badge text states each count. The solid icons are drawn for the app (docs/credits.md), and the reviewer checks them like all Khmer content.
+- Celebrations: three stars or a new best sends sparks from the score; a newly lit star pops into the rumduol on the result card and again on the home sky; a tile's stars pop when they go up; a new badge drops in with sparks round it; lighting the last star brings the whole rumduol in. All of it skips with reduced motion.
 
 ## Brand and theme
 - The app is Aksor (អក្សរ), "Trace the Khmer Alphabet" is the tagline. Both are in src/i18n/en.ts. The `<title>`, the manifest and the theme-color meta tag carry them too.
 - The logo is ក half traced: a dotted guide, mint ink and a star-yellow dot for the finger, beside "aksor" drawn in single strokes. Its shapes are in src/lib/brand.ts. `npm run icons` writes the SVG and PNG icons in public/ from them. Never edit those files by hand.
 - The theme is "Star path": a midnight page with star yellow, mint, green and rose. Colours come only from the semantic variables on :root in src/index.css, used through utilities like bg-surface, text-fg-muted and ring-ink. Tailwind's own palette is switched off, and tests/theme.test.ts fails on a hex or rgb() colour in a component or page, and on any text pair below WCAG AA. A second theme later is one more block of these variables, under a selector such as [data-theme="light"]. The icons, the manifest and the theme-color meta stay midnight.
 - The canvas can't use classes, so it reads its colours (`--guide`, `--ink`, `--covered`, `--missed`) through `canvasColors()`.
-- Flat design (Kim, 2026-10-31): solid colours, no shadows, lips, gradients or borders for depth. Dashed outlines mark what isn't there (the arrow at either end, the badge not yet earned). Buttons and tiles use the `press` utility and shrink a little while pressed. iOS shows :active only because main.tsx listens for touchstart.
+- Flat design (Kim, 2026-10-31): solid colours, no shadows, lips, gradients or borders for depth. Dashed outlines mark what isn't there (the arrow at either end, a badge not yet earned). The badge icons' colours are the `--soil`, `--soil-deep`, `--leaf` and `--cream` tokens, with `--star`, `--mint` and `--missed`. Buttons and tiles use the `press` utility and shrink a little while pressed. iOS shows :active only because main.tsx listens for touchstart.
 - Motion: CSS animations only behind `motion-safe:`, and JavaScript motion only through src/lib/motion.ts, which checks for reduced motion. Animate opacity and transform only, never layout. The e2e tests wait for animations to finish before drawing, and check that nothing animates with reduced motion.
 - No display font: Latin text is Kantumruy Pro too.
 

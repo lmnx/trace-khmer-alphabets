@@ -36,6 +36,39 @@ export function sparkle(element: Element | null, step = 30): void {
   });
 }
 
+// One thing popping in: it grows from nothing, overshoots and settles, for a
+// star that has just lit. Needs transform-box: fill-box inside an SVG.
+export function popIn(element: Element | null, delay = 0): void {
+  if (!element || prefersReducedMotion()) return;
+  element.animate(
+    [
+      { opacity: 0, transform: 'scale(0)' },
+      { opacity: 1, transform: 'scale(1.9)', offset: 0.55 },
+      { opacity: 1, transform: 'scale(1)' },
+    ],
+    { duration: 800, delay, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'backwards' },
+  );
+}
+
+// Little stars flying out from the middle of the element and fading: every
+// [data-spark] inside it travels to its own data-x and data-y offset, in px.
+// The sparks stay invisible (opacity 0) when not animating.
+export function burst(element: Element | null): void {
+  if (!element || prefersReducedMotion()) return;
+  element.querySelectorAll<SVGElement>('[data-spark]').forEach((spark, i) => {
+    const x = Number(spark.dataset.x);
+    const y = Number(spark.dataset.y);
+    spark.animate(
+      [
+        { opacity: 1, transform: 'translate(0, 0) scale(0.2) rotate(0deg)' },
+        { opacity: 1, transform: `translate(${x * 0.75}px, ${y * 0.75}px) scale(1) rotate(90deg)`, offset: 0.55 },
+        { opacity: 0, transform: `translate(${x}px, ${y}px) scale(0.5) rotate(160deg)` },
+      ],
+      { duration: 950, delay: i * 20, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'both' },
+    );
+  });
+}
+
 // Counts up from 0 to `target`, slowing towards the end, for the score. A
 // higher score takes a little longer, so it feels earned. With reduced motion
 // it shows the target at once.

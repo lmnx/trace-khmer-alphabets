@@ -7,10 +7,10 @@ import { en } from '../i18n/en';
 import { useKhmerFontReady } from '../lib/fonts';
 import type { Form } from '../lib/forms';
 import { useProgress } from '../lib/progress';
-import { isSkyLit, nextStar } from '../lib/sky';
+import { nextStar } from '../lib/sky';
 
 // The home page: the opening on a first visit, then the night sky, the
-// Apsara badge and the grid of every character.
+// badges and the grid of every character.
 export function Home({ form }: { form: Form }) {
   const fontReady = useKhmerFontReady();
   const progress = useProgress();
@@ -39,7 +39,7 @@ export function Home({ form }: { form: Form }) {
       ) : (
         <>
           <NightSky progress={progress} />
-          <BadgeShelf earned={isSkyLit(progress)} />
+          <BadgeShelf progress={progress} />
           <LetterGrid form={form} progress={progress} />
         </>
       )}

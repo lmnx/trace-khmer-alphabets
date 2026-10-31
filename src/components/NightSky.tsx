@@ -1,11 +1,14 @@
 import { useEffect, useId, useRef } from 'react';
 import { en } from '../i18n/en';
 import { useKhmerFontReady } from '../lib/fonts';
-import { sparkle } from '../lib/motion';
+import { freshStar } from '../lib/fresh';
+import { popIn, sparkle } from '../lib/motion';
 import type { Progress } from '../lib/progress';
-import { targetHref } from '../lib/router';
-import { isLit, litCount, nextStar, SKY } from '../lib/sky';
-import { SETS, targetKey, targetText, type SetName } from '../lib/targets';
+import { letters } from '../data/letters';
+import { numerals } from '../data/numerals';
+import { targetHref, type TraceTarget } from '../lib/router';
+import { isStarLit, litCount, nextStar, SKY, starIndex, starOf } from '../lib/sky';
+import { targetText } from '../lib/targets';
 import { KhmerText } from './KhmerText';
 import { STAR_BUTTON } from './styles';
 
@@ -23,7 +26,8 @@ export function NightSky({ progress }: { progress: Progress }) {
         </h2>
         <p className="text-sm text-fg-muted">{en.sky.lit(litCount(progress), SKY.length)}</p>
       </div>
-      <Constellation progress={progress} next={next ? targetKey(next) : null} />
+      {/* The star the learner just lit pops again on the way back. */}
+      <Constellation progress={progress} next={next} fresh={freshStar()} />
       {next ? (
         <a href={targetHref(next)} className={STAR_BUTTON}>
           {en.sky.next}
@@ -36,18 +40,21 @@ export function NightSky({ progress }: { progress: Progress }) {
   );
 }
 
-// The constellation: a rumduol flower, one star per character in the sky's
-// order, joined by lines that light once the stars at both ends are lit.
-// `next` (a target key) twinkles in mint. With `celebrate`, every star pops in
-// one after another.
+// The constellation: a rumduol flower, one star per number and consonant in
+// the sky's order, joined by lines that follow the flower's outline and light
+// once the stars at both ends are lit. The star of `next` twinkles in mint,
+// the `fresh` star (its place in SKY) pops in, and with `celebrate` every star
+// pops in one after another.
 export function Constellation({
   progress,
   next = null,
+  fresh = null,
   celebrate = false,
   className = '',
 }: {
   progress: Progress;
-  next?: string | null;
+  next?: TraceTarget | null;
+  fresh?: number | null;
   celebrate?: boolean;
   className?: string;
 }) {
@@ -55,22 +62,24 @@ export function Constellation({
   useEffect(() => {
     if (celebrate) sparkle(svgRef.current, 12);
   }, [celebrate]);
-  const lit = SKY.map((target) => isLit(progress, target));
-  const nextIndex = next === null ? -1 : SKY.findIndex((target) => targetKey(target) === next);
+  useEffect(() => {
+    if (fresh !== null) popIn(svgRef.current?.querySelector(`[data-index="${fresh}"]`) ?? null, 250);
+  }, [fresh]);
+  const lit = SKY.map((star) => isStarLit(progress, star));
+  const nextIndex = next ? starIndex(starOf(next)) : -1;
   return (
     <svg ref={svgRef} aria-hidden="true" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className={`h-auto w-full ${className}`}>
       {DUST.map(([x, y], i) => (
         <circle key={i} cx={x} cy={y} r={0.7} className="fill-fg-faint/40" />
       ))}
-      {LINKS.map(([i, j]) => (
-        <line
+      {LINKS.map(({ i, j, path }) => (
+        <polyline
           key={`${i}-${j}`}
-          x1={POINTS[i][0]}
-          y1={POINTS[i][1]}
-          x2={POINTS[j][0]}
-          y2={POINTS[j][1]}
+          points={path.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')}
+          fill="none"
           strokeWidth={lit[i] && lit[j] ? 1.2 : 0.8}
           strokeLinecap="round"
+          strokeLinejoin="round"
           className={lit[i] && lit[j] ? 'stroke-star/55' : 'stroke-line'}
         />
       ))}
@@ -78,6 +87,7 @@ export function Constellation({
         <circle
           key={i}
           data-star=""
+          data-index={i}
           data-lit={lit[i] ? '' : undefined}
           cx={x}
           cy={y}
@@ -93,12 +103,11 @@ export function Constellation({
 
 // The rumduol, Cambodia's national flower, seen from above and drawn for
 // the app: three broad, pointed outer petals, and three small rounded inner
-// petals closing into a dome over the heart. Each part of the sky is its own
-// part of the flower, filling from the middle out: the numbers ring the
-// heart, the letters light the inner petals, eleven to a petal, and their
-// full forms light the outer petals. Inner petals hide the outer ones where
-// they cover them, as in a line drawing, and stars are spaced evenly along
-// every visible edge.
+// petals closing into a dome over the heart. The flower fills from the middle
+// out: the numbers ring the heart, the first 12 consonants light the inner
+// petals, four to a petal, and the other 21 the outer petals, seven to a
+// petal. Inner petals hide the outer ones where they cover them, as in a line
+// drawing, and stars are spaced evenly along every visible edge.
 
 type Point = readonly [x: number, y: number];
 
@@ -121,21 +130,33 @@ function lengthOf(line: readonly Point[]): number {
   return total;
 }
 
-// `count` points spaced evenly along a polyline, by length, the first and
-// last half a step in from its ends.
-function resample(line: readonly Point[], count: number): Point[] {
+// `count` stars spaced evenly along a polyline, by length, the first and last
+// half a step in from its ends, and the stretch of the line between each
+// star and the next, so the lines joining them follow its curve.
+interface Run {
+  readonly stars: Point[];
+  readonly between: Point[][];
+}
+
+function resample(line: readonly Point[], count: number): Run {
   const lengths = [0];
   for (let i = 1; i < line.length; i++) {
     lengths.push(lengths[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]));
   }
   const total = lengths[lengths.length - 1];
-  return Array.from({ length: count }, (_, k) => {
-    const at = ((k + 0.5) / count) * total;
+  const at = Array.from({ length: count }, (_, k) => ((k + 0.5) / count) * total);
+  const stars = at.map((distance): Point => {
     let i = 1;
-    while (i < line.length - 1 && lengths[i] < at) i++;
-    const t = (at - lengths[i - 1]) / (lengths[i] - lengths[i - 1] || 1);
+    while (i < line.length - 1 && lengths[i] < distance) i++;
+    const t = (distance - lengths[i - 1]) / (lengths[i] - lengths[i - 1] || 1);
     return [line[i - 1][0] + (line[i][0] - line[i - 1][0]) * t, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * t];
   });
+  const between = stars.slice(0, -1).map((star, k) => [
+    star,
+    ...line.filter((_, i) => lengths[i] > at[k] && lengths[i] < at[k + 1]),
+    stars[k + 1],
+  ]);
+  return { stars, between };
 }
 
 function inside([x, y]: Point, polygon: readonly Point[]): boolean {
@@ -190,7 +211,7 @@ function visible(outline: readonly Point[], fronts: readonly (readonly Point[])[
 }
 
 // `count` stars along a petal's visible runs, shared out by length.
-function petalStars(outline: readonly Point[], fronts: readonly (readonly Point[])[], count: number): Point[][] {
+function petalStars(outline: readonly Point[], fronts: readonly (readonly Point[])[], count: number): Run[] {
   const runs = visible(outline, fronts);
   const lengths = runs.map(lengthOf);
   const sum = lengths.reduce((a, b) => a + b, 0);
@@ -198,53 +219,60 @@ function petalStars(outline: readonly Point[], fronts: readonly (readonly Point[
   // Rounding can leave the total one off: settle it on the longest run.
   const longest = lengths.indexOf(Math.max(...lengths));
   counts[longest] += count - counts.reduce((a, b) => a + b, 0);
-  return runs.map((run, i) => resample(run, counts[i])).filter((group) => group.length > 0);
+  return runs.map((run, i) => resample(run, counts[i])).filter((group) => group.stars.length > 0);
 }
 
-function heart(count: number): Point[] {
-  return Array.from({ length: count }, (_, i) => {
-    const angle = -Math.PI / 2 + (2 * Math.PI * i) / count;
+// The heart: a ring of stars, joined round the circle.
+function heart(count: number): Run {
+  const at = (turn: number): Point => {
+    const angle = -Math.PI / 2 + 2 * Math.PI * turn;
     return [CENTRE[0] + HEART_RADIUS * Math.cos(angle), CENTRE[1] + HEART_RADIUS * Math.sin(angle)];
-  });
+  };
+  const stars = Array.from({ length: count }, (_, i) => at(i / count));
+  const between = stars.map((_, i) => Array.from({ length: 7 }, (_, k) => at((i + k / 6) / count)));
+  return { stars, between };
 }
 
-const sizeOf = (name: SetName) => SETS.find((set) => set.name === name)?.targets.length ?? 0;
-const PER_PETAL = sizeOf('letters') / 3;
+const INNER_STARS = 4;
+const OUTER_STARS = (letters.length - 3 * INNER_STARS) / 3;
 
 // In the sky's order: the heart, the inner petals, the outer petals.
-const GROUPS: Point[][] = [
-  heart(sizeOf('numbers')),
-  ...INNER.flatMap((outline, i) => petalStars(outline, INNER.slice(0, i), PER_PETAL)),
-  ...OUTER.flatMap((outline) => petalStars(outline, INNER, sizeOf('both') / 3)),
+const GROUPS: Run[] = [
+  heart(numerals.length),
+  ...INNER.flatMap((outline, i) => petalStars(outline, INNER.slice(0, i), INNER_STARS)),
+  ...OUTER.flatMap((outline) => petalStars(outline, INNER, OUTER_STARS)),
 ];
 
-// Every star, a little off its line so the sky looks hand-placed.
-const POINTS: readonly Point[] = GROUPS.flat().map(([x, y], i) => [x + 1.2 * jitter(i, 1), y + 1.2 * jitter(i, 2)]);
+const POINTS: readonly Point[] = GROUPS.flatMap((group) => group.stars);
 
-// Lines along each run of stars and round the heart, and from the ends of
-// each run to the nearest star of another part, so the flower is one figure.
-const LINKS: readonly (readonly [number, number])[] = (() => {
-  const links = new Map<string, [number, number]>();
-  const add = (i: number, j: number) => links.set(`${Math.min(i, j)}-${Math.max(i, j)}`, [Math.min(i, j), Math.max(i, j)]);
+// Lines along each run of stars and round the heart, and straight from the
+// ends of each run to the nearest star of another part, so the flower is one
+// figure. Each joins star i to star j along `path`.
+const LINKS: readonly { i: number; j: number; path: readonly Point[] }[] = (() => {
+  const links: { i: number; j: number; path: readonly Point[] }[] = [];
   const groupOf: number[] = [];
   const ends: number[] = [];
   let start = 0;
   GROUPS.forEach((group, g) => {
-    for (let k = 0; k < group.length; k++) groupOf.push(g);
-    for (let k = 0; k + 1 < group.length; k++) add(start + k, start + k + 1);
-    if (g === 0) add(start + group.length - 1, start);
-    else ends.push(start, start + group.length - 1);
-    start += group.length;
+    for (let k = 0; k < group.stars.length; k++) groupOf.push(g);
+    group.between.forEach((path, k) => links.push({ i: start + k, j: start + ((k + 1) % group.stars.length), path }));
+    if (g > 0) ends.push(start, start + group.stars.length - 1);
+    start += group.stars.length;
   });
   const distance = (i: number, j: number) => Math.hypot(POINTS[i][0] - POINTS[j][0], POINTS[i][1] - POINTS[j][1]);
+  const joined = new Set(links.map(({ i, j }) => `${Math.min(i, j)}-${Math.max(i, j)}`));
   for (const end of ends) {
     let best = -1;
     for (let j = 0; j < POINTS.length; j++) {
       if (groupOf[j] !== groupOf[end] && (best < 0 || distance(end, j) < distance(end, best))) best = j;
     }
-    if (best >= 0 && distance(end, best) < 24) add(end, best);
+    const key = `${Math.min(end, best)}-${Math.max(end, best)}`;
+    if (best >= 0 && distance(end, best) < 24 && !joined.has(key)) {
+      joined.add(key);
+      links.push({ i: end, j: best, path: [POINTS[end], POINTS[best]] });
+    }
   }
-  return [...links.values()];
+  return links;
 })();
 
 // Faint specks of distant stars, which no character lights.

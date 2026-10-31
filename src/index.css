@@ -65,6 +65,12 @@
   --ink: #4fe3c1;
   --covered: #6ee07a;
   --missed: #ff7a90;
+  /* The badges' growing things: earth for the seed, green for leaves, cream
+     for the rumduol's inner petals. Its outer petals are --star. */
+  --soil: #d08b52;
+  --soil-deep: #7a4a26;
+  --leaf: #6ee07a;
+  --cream: #fff1c2;
 }
 
 @theme {
@@ -73,12 +79,13 @@
   --font-sans: "Kantumruy Pro", ui-sans-serif, system-ui, sans-serif;
 
   /* Screens come in, the score card rises, the next star to light twinkles
-     a few times, and a badge pops in. Used with motion-safe: only. */
+     a few times, and a badge pops or drops in. Used with motion-safe: only. */
   --animate-enter: enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-fade-in: fade-in 220ms ease-out both;
   --animate-rise: rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-twinkle: twinkle 1.6s ease-in-out 4;
   --animate-pop: pop 520ms cubic-bezier(0.34, 1.8, 0.64, 1) both;
+  --animate-drop: drop 700ms cubic-bezier(0.34, 1.6, 0.64, 1) both;
 
   @keyframes enter {
     from {
@@ -110,6 +117,14 @@
       scale: 0.4;
     }
   }
+  @keyframes drop {
+    from {
+      opacity: 0;
+      translate: 0 -40px;
+      scale: 0.5;
+      rotate: -12deg;
+    }
+  }
 }
 
 @theme inline {
@@ -130,6 +145,10 @@
   --color-ink: var(--ink);
   --color-covered: var(--covered);
   --color-missed: var(--missed);
+  --color-soil: var(--soil);
+  --color-soil-deep: var(--soil-deep);
+  --color-leaf: var(--leaf);
+  --color-cream: var(--cream);
 }
 
 /*

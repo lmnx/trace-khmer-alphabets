@@ -3,7 +3,7 @@ import { CSP } from '../plugins/csp';
 import { letters } from '../src/data/letters';
 import { numerals } from '../src/data/numerals';
 import { en } from '../src/i18n/en';
-import { glyph, type Form } from '../src/lib/forms';
+import { glyph } from '../src/lib/forms';
 import { homeHref, numberHref, traceHref } from '../src/lib/router';
 import { expect, seedProgress, test, WELCOMED } from './fixtures';
 
@@ -13,10 +13,7 @@ const hash = (page: Page) => new URL(page.url()).hash;
 // A returning learner, so the home page shows the sky and the grid, not the opening.
 test.beforeEach(({ page }) => seedProgress(page, WELCOMED));
 
-async function pickForm(page: Page, form: Form) {
-  await page.locator('fieldset label', { hasText: en.grid.forms[form] }).tap();
-  await expect(page.getByRole('radio', { name: en.grid.forms[form] })).toBeChecked();
-}
+const formSwitch = (page: Page) => page.getByRole('switch', { name: en.grid.switchLabel });
 
 test('home page shows the title, numbers and letters in Kantumruy Pro', async ({ page }) => {
   const khmerFont = page.waitForResponse((response) => response.url().endsWith('/fonts/kantumruy-pro-khmer.woff2'));
@@ -38,7 +35,8 @@ test('home page shows the title, numbers and letters in Kantumruy Pro', async ({
 
 test('the grid shows ០ to ៩, then all 33 letters in one block, in order, all open', async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByRole('region')).toHaveCount(3);
+  // The night sky, the badges, the numbers and the consonants.
+  await expect(page.getByRole('region')).toHaveCount(4);
 
   const numberTiles = section(page, en.grid.numbers).getByRole('link');
   await expect(numberTiles).toHaveCount(10);
@@ -59,15 +57,17 @@ test('the grid shows ០ to ៩, then all 33 letters in one block, in order, all
   }
 });
 
-test('the toggle shows the letters in their full form, with ឡ alone', async ({ page }) => {
+test('the switch shows each consonant with its subscript, with ឡ alone', async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByRole('radio', { name: en.grid.forms.letter })).toBeChecked();
-  // Letter and Both only: the Subscript form was dropped.
-  await expect(page.getByRole('radio')).toHaveCount(2);
+  await expect(formSwitch(page)).toHaveAttribute('aria-checked', 'false');
+  await expect(formSwitch(page)).toContainText(en.grid.forms.letter);
+  await expect(formSwitch(page)).toContainText(en.grid.forms.both);
   const historyLength = await page.evaluate(() => history.length);
   const items = section(page, en.grid.letters).getByRole('listitem');
 
-  await pickForm(page, 'both');
+  // Tapping the side that's off picks it.
+  await formSwitch(page).locator('[data-side="both"]').tap();
+  await expect(formSwitch(page)).toHaveAttribute('aria-checked', 'true');
   expect(hash(page)).toBe(homeHref('both'));
   await expect(section(page, en.grid.letters).getByRole('link')).toHaveCount(33);
   for (const [i, letter] of letters.entries()) {
@@ -79,7 +79,11 @@ test('the toggle shows the letters in their full form, with ឡ alone', async ({
   // The numbers don't change with the toggle.
   await expect(section(page, en.grid.numbers).getByRole('link')).toHaveCount(10);
 
-  await pickForm(page, 'letter');
+  // Tapping the side that's on keeps it; the switch flips it back.
+  await formSwitch(page).locator('[data-side="both"]').tap();
+  expect(hash(page)).toBe(homeHref('both'));
+  await formSwitch(page).press('Enter');
+  await expect(formSwitch(page)).toHaveAttribute('aria-checked', 'false');
   expect(hash(page)).toBe(homeHref('letter'));
   // Switching forms replaces the history entry instead of adding one per tap.
   expect(await page.evaluate(() => history.length)).toBe(historyLength);
@@ -89,7 +93,7 @@ test('tiles, buttons and the toggle are big enough to tap on narrow phones, with
   for (const width of [320, 375]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('./');
-    const tiles = page.getByRole('main').locator('ul li > *');
+    const tiles = page.getByRole('main').locator('ul li > a');
     await expect(tiles).toHaveCount(numerals.length + letters.length);
     const sizes = await tiles.evaluateAll((els) =>
       els.map((el) => {
@@ -100,7 +104,7 @@ test('tiles, buttons and the toggle are big enough to tap on narrow phones, with
     expect(Math.min(...sizes), `smallest tile at ${width} px`).toBeGreaterThanOrEqual(64);
     // To the nearest 0.01 px: while the page slides in, a box's edges can sit
     // between pixels and its height come out a hair under.
-    const targets = page.getByRole('main').locator('a, button, fieldset label');
+    const targets = page.getByRole('main').locator('a, button');
     const heights = await targets.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height * 100) / 100));
     expect(Math.min(...heights), `shortest tap target at ${width} px`).toBeGreaterThanOrEqual(48);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
@@ -123,7 +127,7 @@ test('tapping a tile opens it on the trace page, and the back link keeps the for
   await expect(page.getByRole('heading', { name: en.trace.both(1) })).toBeVisible();
   await page.getByRole('link', { name: en.nav.allLetters }).tap();
   expect(hash(page)).toBe(homeHref('both'));
-  await expect(page.getByRole('radio', { name: en.grid.forms.both })).toBeChecked();
+  await expect(formSwitch(page)).toHaveAttribute('aria-checked', 'true');
 
   // ឡ has no subscript, so in Both it opens as the letter alone.
   const la = letters.find((letter) => !letter.subscript);

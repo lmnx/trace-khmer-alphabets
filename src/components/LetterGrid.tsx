@@ -3,6 +3,7 @@ import { letters } from '../data/letters';
 import { numerals } from '../data/numerals';
 import { en } from '../i18n/en';
 import { useKhmerFontReady } from '../lib/fonts';
+import { freshTile } from '../lib/fresh';
 import { glyph, type Form } from '../lib/forms';
 import type { Best, Progress } from '../lib/progress';
 import { targetHref, type TraceTarget } from '../lib/router';
@@ -22,6 +23,8 @@ export function LetterGrid({ form, progress }: { form: Form; progress: Progress 
   const fontReady = useKhmerFontReady();
   const next = nextStar(progress);
   const isNext = (target: TraceTarget) => next !== null && targetKey(next) === targetKey(target);
+  // The tile whose stars just went up shows them popping in.
+  const fresh = freshTile();
 
   function tile(target: TraceTarget, text: string, label: string, glyphClass: string) {
     return (
@@ -31,6 +34,7 @@ export function LetterGrid({ form, progress }: { form: Form; progress: Progress 
         label={label}
         best={bestOf(progress, target)}
         next={isNext(target)}
+        fresh={fresh === targetKey(target)}
         fontReady={fontReady}
         glyphClass={glyphClass}
       />
@@ -94,6 +98,7 @@ function Tile({
   label,
   best,
   next,
+  fresh,
   fontReady,
   glyphClass,
 }: {
@@ -102,6 +107,7 @@ function Tile({
   label: string;
   best: Best | null;
   next: boolean;
+  fresh: boolean;
   fontReady: boolean;
   glyphClass: string;
 }) {
@@ -115,7 +121,7 @@ function Tile({
       {/* The best stars sit beside the label, clear of tall characters. */}
       <span className="flex items-center gap-1 text-sm leading-none text-fg-muted">
         {label}
-        {best && <StarPips count={best.stars} className="size-2.5" />}
+        {best && <StarPips count={best.stars} pop={fresh} className="size-2.5" />}
       </span>
     </a>
   );
